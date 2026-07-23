@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตลาดนัดนักเรียน</title>
+<style>
+  :root{
+    --night: #10221f;
+    --stall: #17352f;
+    --stall-2: #1f4038;
+    --lantern: #f2a541;
+    --lantern-2: #e0672c;
+    --mint: #7fd8b8;
+    --paper: #f4ecd8;
+    --loss: #e06262;
+    --border: rgba(242,165,65,0.25);
+    font-family: 'Segoe UI', 'Sarabun', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(242,165,65,0.12), transparent 45%),
+      radial-gradient(ellipse at 100% 0%, rgba(127,216,184,0.10), transparent 40%),
+      var(--night);
+    color: var(--paper);
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 22px;border-bottom:1px solid var(--border);
+    background:rgba(0,0,0,0.15);
+    position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);
+  }
+  .topbar h1{font-size:1.15rem;margin:0;letter-spacing:0.3px;}
+  .topbar h1 span{color:var(--lantern);}
+  .stats{display:flex;gap:18px;align-items:center;font-size:0.9rem;}
+  .cash{font-weight:700;color:var(--lantern);font-size:1.1rem;}
+  .timer{padding:5px 12px;border-radius:20px;background:var(--stall-2);border:1px solid var(--border);}
+  .timer.low{background:rgba(224,98,98,0.25);border-color:var(--loss);color:#ffb3b3;}
+
+  #login{
+    max-width:380px;margin:14vh auto;padding:28px;
+    background:var(--stall);border:1px solid var(--border);border-radius:16px;
+    text-align:center;
+  }
+  #login h2{color:var(--lantern);margin-top:0;}
+  #login input{
+    width:100%;padding:11px;margin:8px 0;border-radius:8px;border:1px solid var(--border);
+    background:var(--night);color:var(--paper);font-size:1rem;
+  }
+  #login button{
+    width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;
+    background:linear-gradient(135deg,var(--lantern),var(--lantern-2));
+    color:#241205;font-weight:700;font-size:1rem;cursor:pointer;
+  }
+  #login .msg{color:var(--loss);min-height:20px;font-size:0.85rem;margin-top:6px;}
+
+  main{max-width:1100px;margin:0 auto;padding:20px;display:none;}
+  main.show{display:block;}
+
+  .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--stall);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px;margin-bottom:18px;
+  }
+  .card h3{margin:0 0 12px;font-size:1rem;color:var(--mint);
+    display:flex;align-items:center;gap:8px;}
+  .card h3::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--lantern);}
+
+  .item-row{
+    display:flex;align-items:center;gap:10px;padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.92rem;
+  }
+  .item-row:last-child{border-bottom:none;}
+  .emoji{font-size:1.3rem;width:28px;text-align:center;}
+  .item-name{flex:1;}
+  .item-price{color:var(--lantern);font-weight:700;min-width:70px;text-align:right;}
+  .qty-input{
+    width:50px;padding:6px;border-radius:6px;border:1px solid var(--border);
+    background:var(--night);color:var(--paper);text-align:center;
+  }
+  .price-input{
+    width:65px;padding:6px;border-radius:6px;border:1px solid var(--border);
+    background:var(--night);color:var(--paper);text-align:center;
+  }
+  .btn{
+    padding:7px 12px;border:none;border-radius:7px;cursor:pointer;font-weight:600;
+    font-size:0.85rem;white-space:nowrap;
+  }
+  .btn-buy{background:var(--mint);color:#0a2620;}
+  .btn-sell{background:var(--lantern);color:#241205;}
+  .btn-cancel{background:transparent;border:1px solid var(--loss);color:var(--loss);}
+  .btn-buy:hover,.btn-sell:hover{filter:brightness(1.1);}
+
+  .inv-item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .inv-item:last-child{border-bottom:none;}
+  .inv-cost{font-size:0.75rem;color:#9fb8ae;}
+
+  .leaderboard-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;}
+  .leaderboard-row.me{background:rgba(242,165,65,0.12);}
+  .rank{width:22px;text-align:center;font-weight:700;color:var(--mint);}
+  .lb-name{flex:1;}
+  .lb-worth{font-weight:700;color:var(--lantern);}
+
+  .empty{color:#8fa39c;font-size:0.85rem;padding:8px 0;}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--stall-2);border:1px solid var(--lantern);color:var(--paper);
+    padding:10px 20px;border-radius:10px;font-size:0.9rem;opacity:0;transition:opacity .3s;
+    z-index:50;
+  }
+  .toast.show{opacity:1;}
+  .gameover{
+    max-width:420px;margin:12vh auto;text-align:center;padding:30px;
+    background:var(--stall);border:1px solid var(--lantern);border-radius:16px;
+  }
+  .gameover h2{color:var(--lantern);}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h2>🏮 ตลาดนัดนักเรียน</h2>
+  <input id="nameInput" placeholder="ชื่อของเธอ" maxlength="20">
+  <input id="codeInput" placeholder="รหัสห้อง (ครูให้)" maxlength="20">
+  <button onclick="doJoin()">เข้าตลาด</button>
+  <div class="msg" id="loginMsg"></div>
+</div>
+
+<div id="app">
+<div class="topbar" style="display:none" id="topbar">
+  <h1>🏮 <span id="gameNameLabel">ตลาดนัดนักเรียน</span></h1>
+  <div class="stats">
+    <div class="timer" id="timerBox">⏳ --:--</div>
+    <div class="cash">💰 <span id="cashLabel">0</span></div>
+  </div>
+</div>
+
+<main id="main">
+
+<div id="gameOverBox" class="gameover" style="display:none">
+  <h2>🏁 จบเกมแล้ว!</h2>
+  <p>ดูอันดับสุดท้ายของทุกคนได้ด้านล่าง</p>
+</div>
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h3>🏭 ซื้อจากซัพพลายเออร์กลาง (ราคาขยับตลอดเวลา)</h3>
+      <div id="supplierList"></div>
+    </div>
+
+    <div class="card">
+      <h3>🛍️ ตลาดกลาง (ของเพื่อน ๆ)</h3>
+      <div id="marketList"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h3>🎒 สต๊อกของฉัน</h3>
+      <div id="myInventory"></div>
+    </div>
+
+    <div class="card">
+      <h3>🏷️ ของที่ฉันวางขายอยู่</h3>
+      <div id="myListings"></div>
+    </div>
+
+    <div class="card">
+      <h3>🏆 กระดานผู้นำ</h3>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================================
+// ตั้งค่า URL ของ Google Apps Script Web App ที่ deploy แล้ว
+// ==========================================================
+const API_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+let studentId = localStorage.getItem('marketStudentId') || null;
+let pollTimer = null;
+let latestSupplier = [];
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function api(action, payload){
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action, ...payload })
+  });
+  return res.json();
+}
+
+async function doJoin(){
+  const name = document.getElementById('nameInput').value.trim();
+  const code = document.getElementById('codeInput').value.trim();
+  const msg = document.getElementById('loginMsg');
+  if(!name || !code){ msg.textContent = 'กรอกชื่อและรหัสห้องให้ครบ'; return; }
+  msg.textContent = 'กำลังเข้าตลาด...';
+  const r = await api('join', { name, code });
+  if(r.error){ msg.textContent = r.error; return; }
+  studentId = r.studentId;
+  localStorage.setItem('marketStudentId', studentId);
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('main').classList.add('show');
+  startPolling();
+}
+
+function startPolling(){
+  fetchState();
+  pollTimer = setInterval(fetchState, 3000);
+}
+
+async function fetchState(){
+  if(!studentId) return;
+  const s = await api('state', { studentId });
+  if(s.error){
+    showToast(s.error);
+    localStorage.removeItem('marketStudentId');
+    clearInterval(pollTimer);
+    document.getElementById('login').style.display='block';
+    document.getElementById('topbar').style.display='none';
+    document.getElementById('main').classList.remove('show');
+    return;
+  }
+  render(s);
+}
+
+function fmtTime(sec){
+  if(sec === null) return '⏳ รอครูเริ่มเกม';
+  const m = Math.floor(sec/60), s = sec%60;
+  return `⏳ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function render(s){
+  document.getElementById('gameNameLabel').textContent = s.gameName;
+  document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
+  const timerBox = document.getElementById('timerBox');
+  timerBox.textContent = fmtTime(s.timeLeftSeconds);
+  timerBox.classList.toggle('low', s.timeLeftSeconds !== null && s.timeLeftSeconds < 60);
+
+  document.getElementById('gameOverBox').style.display = s.gameEnded ? 'block' : 'none';
+
+  latestSupplier = s.supplierItems;
+  renderSupplier(s.supplierItems);
+  renderMarket(s.market, s.gameEnded);
+  renderInventory(s.inventory, s.gameEnded);
+  renderMyListings(s.myListings, s.gameEnded);
+  renderLeaderboard(s.leaderboard, s.student.name);
+}
+
+function renderSupplier(items){
+  const el = document.getElementById('supplierList');
+  el.innerHTML = items.map(it => `
+    <div class="item-row">
+      <div class="emoji">${it.emoji||'📦'}</div>
+      <div class="item-name">${it.itemName}</div>
+      <div class="item-price">${it.price} บ.</div>
+      <input class="qty-input" type="number" min="1" value="1" id="buyqty_${it.itemName}">
+      <button class="btn btn-buy" onclick="buySupplier('${it.itemName}')">ซื้อ</button>
+    </div>
+  `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
+}
+
+function renderMarket(listings, ended){
+  const el = document.getElementById('marketList');
+  if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย</div>'; return; }
+  el.innerHTML = listings.map(l => `
+    <div class="item-row">
+      <div class="item-name"><b>${l.sellerName}</b> ขาย ${l.itemName} (เหลือ ${l.qty})</div>
+      <div class="item-price">${l.price} บ.</div>
+      <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
+      <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}')">ซื้อ</button>
+    </div>
+  `).join('');
+}
+
+function renderInventory(inv, ended){
+  const el = document.getElementById('myInventory');
+  if(!inv.length){ el.innerHTML = '<div class="empty">ยังไม่มีของในสต๊อก ลองซื้อจากซัพพลายเออร์ดูสิ</div>'; return; }
+  el.innerHTML = inv.map(i => `
+    <div class="inv-item">
+      <div class="item-name">${i.itemName} x${i.qty}<br><span class="inv-cost">ต้นทุนเฉลี่ย ${i.avgCost} บ./ชิ้น</span></div>
+      <input class="qty-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
+      <input class="price-input" type="number" min="1" placeholder="ราคาขาย" id="sellprice_${i.itemName}">
+      <button class="btn btn-sell" ${ended?'disabled':''} onclick="listForSale('${i.itemName}')">วางขาย</button>
+    </div>
+  `).join('');
+}
+
+function renderMyListings(listings, ended){
+  const el = document.getElementById('myListings');
+  if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีของวางขาย</div>'; return; }
+  el.innerHTML = listings.map(l => `
+    <div class="item-row">
+      <div class="item-name">${l.itemName} x${l.qty} @ ${l.price} บ.</div>
+      <button class="btn btn-cancel" ${ended?'disabled':''} onclick="cancelListing('${l.id}')">ยกเลิก</button>
+    </div>
+  `).join('');
+}
+
+function renderLeaderboard(list, myName){
+  const el = document.getElementById('leaderboard');
+  el.innerHTML = list.map((p, idx) => `
+    <div class="leaderboard-row ${p.name===myName?'me':''}">
+      <div class="rank">${idx+1}</div>
+      <div class="lb-name">${p.name}</div>
+      <div class="lb-worth">${p.netWorth.toLocaleString()} บ.</div>
+    </div>
+  `).join('');
+}
+
+async function buySupplier(itemName){
+  const qty = Number(document.getElementById(`buyqty_${itemName}`).value);
+  const r = await api('buyFromSupplier', { studentId, itemName, qty });
+  if(r.error) showToast(r.error); else showToast(`ซื้อ ${itemName} x${qty} สำเร็จ`);
+  fetchState();
+}
+
+async function listForSale(itemName){
+  const qty = Number(document.getElementById(`sellqty_${itemName}`).value);
+  const price = Number(document.getElementById(`sellprice_${itemName}`).value);
+  if(!price){ showToast('ใส่ราคาขายด้วย'); return; }
+  const r = await api('listForSale', { studentId, itemName, qty, price });
+  if(r.error) showToast(r.error); else showToast(`วางขาย ${itemName} x${qty} แล้ว`);
+  fetchState();
+}
+
+async function cancelListing(listingId){
+  const r = await api('cancelListing', { studentId, listingId });
+  if(r.error) showToast(r.error); else showToast('ยกเลิกรายการแล้ว');
+  fetchState();
+}
+
+async function buyListing(listingId){
+  const qty = Number(document.getElementById(`buymarket_${listingId}`).value);
+  const r = await api('buyListing', { studentId, listingId, qty });
+  if(r.error) showToast(r.error); else showToast(`ซื้อสำเร็จ! -${r.total} บ.`);
+  fetchState();
+}
+
+// ถ้าเคยเข้าเกมไปแล้ว (มี studentId ใน localStorage) ให้เข้าเลย
+if(studentId){
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('main').classList.add('show');
+  startPolling();
+}
+</script>
+
+</body>
+</html>
