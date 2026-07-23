@@ -107,6 +107,53 @@
   .lb-name{flex:1;}
   .lb-worth{font-weight:700;color:var(--lantern);}
 
+  /* ===== แผงค้า (stalls) ===== */
+  .stall-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    gap:14px;
+  }
+  .stall{
+    position:relative;
+    background:var(--stall-2);
+    border:1px solid var(--border);
+    border-radius:0 0 10px 10px;
+    padding:14px 12px 12px;
+    padding-top:16px;
+  }
+  .stall::before{
+    /* หลังคาผ้าใบลายทาง */
+    content:"";
+    position:absolute;top:-10px;left:-2px;right:-2px;height:16px;
+    background:repeating-linear-gradient(
+      110deg,
+      var(--awning-a) 0 14px,
+      var(--awning-b) 14px 28px
+    );
+    border-radius:10px 10px 3px 3px;
+    box-shadow:0 3px 6px rgba(0,0,0,0.35);
+  }
+  .stall-header{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+  .stall-avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--awning-a);
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.15rem;border:2px solid rgba(255,255,255,0.25);
+    flex-shrink:0;
+  }
+  .stall-seller{font-weight:700;font-size:0.9rem;line-height:1.15;}
+  .stall-tag{font-size:0.7rem;color:#9fb8ae;}
+  .stall-goods{display:flex;flex-direction:column;gap:8px;}
+  .stall-good{
+    background:rgba(0,0,0,0.18);border-radius:8px;padding:7px 9px;
+    font-size:0.85rem;
+  }
+  .stall-good-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .stall-good-name{flex:1;}
+  .stall-good-price{color:var(--lantern);font-weight:700;}
+  .stall-good-controls{display:flex;gap:6px;align-items:center;}
+  .stall-good-controls .qty-input{width:44px;}
+  .stall-empty-note{color:#9fb8ae;font-size:0.75rem;font-style:italic;padding:4px 0 0;}
+
   .empty{color:#8fa39c;font-size:0.85rem;padding:8px 0;}
   .toast{
     position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
@@ -134,7 +181,7 @@
 
 <div id="app">
 <div class="topbar" style="display:none" id="topbar">
-  <h1>🏮 <span id="gameNameLabel">ตลาดนัดนักเรียน</span></h1>
+  <h1><span id="myAvatarLabel">🏮</span> <span id="gameNameLabel">ตลาดนัดนักเรียน</span></h1>
   <div class="stats">
     <div class="timer" id="timerBox">⏳ --:--</div>
     <div class="cash">💰 <span id="cashLabel">0</span></div>
@@ -156,8 +203,8 @@
     </div>
 
     <div class="card">
-      <h3>🛍️ ตลาดกลาง (ของเพื่อน ๆ)</h3>
-      <div id="marketList"></div>
+      <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ)</h3>
+      <div id="marketList" class="stall-grid"></div>
     </div>
   </div>
 
@@ -253,6 +300,7 @@ function fmtTime(sec){
 
 function render(s){
   document.getElementById('gameNameLabel').textContent = s.gameName;
+  document.getElementById('myAvatarLabel').textContent = vendorEmoji(s.student.name);
   document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
   const timerBox = document.getElementById('timerBox');
   timerBox.textContent = fmtTime(s.timeLeftSeconds);
@@ -281,17 +329,59 @@ function renderSupplier(items){
   `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
 }
 
+// อวตาร์แม่ค้า/พ่อค้า สุ่มแบบ deterministic ตามชื่อ (คนเดิมได้อวตาร์เดิมเสมอ)
+const VENDOR_EMOJIS = ['🧕','👩‍🌾','👨‍🌾','🧑‍🍳','👩‍🍳','👨‍🍳','🧔','👵','👴','🙋‍♀️','🙋‍♂️','👩‍🦱','👨‍🦱','🧑‍🦳','👩‍🦳'];
+const AWNING_PALETTES = [
+  ['#e0672c','#f2a541'], ['#3c8f6f','#7fd8b8'], ['#c94f6d','#f2a541'],
+  ['#4a7fbf','#7fd8b8'], ['#b3762c','#f2c46a'], ['#7f5aa2','#c99ee0'],
+  ['#2c8f8f','#7fd8d8'], ['#a24a3c','#e0916b']
+];
+function hashStr(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+function vendorEmoji(name){ return VENDOR_EMOJIS[hashStr(name) % VENDOR_EMOJIS.length]; }
+function vendorPalette(name){ return AWNING_PALETTES[hashStr(name) % AWNING_PALETTES.length]; }
+
 function renderMarket(listings, ended){
   const el = document.getElementById('marketList');
-  if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย</div>'; return; }
-  el.innerHTML = listings.map(l => `
-    <div class="item-row">
-      <div class="item-name"><b>${l.sellerName}</b> ขาย ${l.itemName} (เหลือ ${l.qty})</div>
-      <div class="item-price">${l.price} บ.</div>
-      <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
-      <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}')">ซื้อ</button>
-    </div>
-  `).join('');
+  if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>'; return; }
+
+  // จัดกลุ่มของตามคนขาย ให้แต่ละคนมีแผงค้าเป็นของตัวเอง
+  const bySeller = {};
+  listings.forEach(l => {
+    if(!bySeller[l.sellerName]) bySeller[l.sellerName] = [];
+    bySeller[l.sellerName].push(l);
+  });
+
+  el.innerHTML = Object.entries(bySeller).map(([sellerName, goods]) => {
+    const [a, b] = vendorPalette(sellerName);
+    const goodsHtml = goods.map(l => `
+      <div class="stall-good">
+        <div class="stall-good-top">
+          <div class="stall-good-name">${l.itemName} <span class="stall-tag">(เหลือ ${l.qty})</span></div>
+          <div class="stall-good-price">${l.price} บ.</div>
+        </div>
+        <div class="stall-good-controls">
+          <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
+          <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}')">ซื้อ</button>
+        </div>
+      </div>
+    `).join('');
+    return `
+      <div class="stall" style="--awning-a:${a};--awning-b:${b}">
+        <div class="stall-header">
+          <div class="stall-avatar" style="background:${a}">${vendorEmoji(sellerName)}</div>
+          <div>
+            <div class="stall-seller">แผง${sellerName}</div>
+            <div class="stall-tag">${goods.length} รายการ</div>
+          </div>
+        </div>
+        <div class="stall-goods">${goodsHtml}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderInventory(inv, ended){
