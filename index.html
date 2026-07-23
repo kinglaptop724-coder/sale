@@ -107,52 +107,86 @@
   .lb-name{flex:1;}
   .lb-worth{font-weight:700;color:var(--lantern);}
 
-  /* ===== แผงค้า (stalls) ===== */
+  /* ===== แผงค้า (stalls) แบบแผงลอยจริง ===== */
   .stall-grid{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-    gap:14px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:26px 18px;
   }
   .stall{
     position:relative;
-    background:var(--stall-2);
-    border:1px solid var(--border);
-    border-radius:0 0 10px 10px;
-    padding:14px 12px 12px;
-    padding-top:16px;
+    padding-top:8px;
   }
-  .stall::before{
-    /* หลังคาผ้าใบลายทาง */
-    content:"";
-    position:absolute;top:-10px;left:-2px;right:-2px;height:16px;
+
+  /* หลังคาผ้าใบลายทางขอบหยัก */
+  .stall-roof{
+    height:34px;
     background:repeating-linear-gradient(
-      110deg,
-      var(--awning-a) 0 14px,
-      var(--awning-b) 14px 28px
+      90deg,
+      var(--awning-a) 0 12.5%,
+      var(--awning-b) 12.5% 25%
     );
-    border-radius:10px 10px 3px 3px;
-    box-shadow:0 3px 6px rgba(0,0,0,0.35);
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 72%,
+      93.75% 72%, 90.6% 100%, 87.5% 72%,
+      81.25% 72%, 78.1% 100%, 75% 72%,
+      68.75% 72%, 65.6% 100%, 62.5% 72%,
+      56.25% 72%, 53.1% 100%, 50% 72%,
+      43.75% 72%, 40.6% 100%, 37.5% 72%,
+      31.25% 72%, 28.1% 100%, 25% 72%,
+      18.75% 72%, 15.6% 100%, 12.5% 72%,
+      6.25% 72%, 3.1% 100%, 0% 72%
+    );
+    box-shadow:0 2px 4px rgba(0,0,0,0.4);
   }
-  .stall-header{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+
+  /* เสาไม้สองข้าง */
+  .stall-posts{display:flex;justify-content:space-between;padding:0 10px;height:14px;}
+  .stall-posts::before, .stall-posts::after{
+    content:"";width:6px;height:100%;
+    background:linear-gradient(90deg,#8a5a2e,#b9803f,#8a5a2e);
+    border-radius:2px;
+  }
+
+  /* ป้ายชื่อร้านแขวนกลาง */
+  .stall-sign{
+    display:flex;align-items:center;gap:7px;justify-content:center;
+    background:var(--stall-2);border:1px solid var(--border);
+    border-radius:20px;padding:4px 12px 4px 6px;
+    width:fit-content;margin:2px auto 8px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.3);
+  }
   .stall-avatar{
-    width:36px;height:36px;border-radius:50%;
+    width:28px;height:28px;border-radius:50%;
     background:var(--awning-a);
     display:flex;align-items:center;justify-content:center;
-    font-size:1.15rem;border:2px solid rgba(255,255,255,0.25);
+    font-size:0.95rem;border:2px solid rgba(255,255,255,0.25);
     flex-shrink:0;
   }
-  .stall-seller{font-weight:700;font-size:0.9rem;line-height:1.15;}
-  .stall-tag{font-size:0.7rem;color:#9fb8ae;}
+  .stall-seller{font-weight:700;font-size:0.82rem;line-height:1.1;}
+  .stall-tag{font-size:0.68rem;color:#9fb8ae;}
+
+  /* เคาน์เตอร์ไม้ที่วางของขาย */
+  .stall-counter{
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 34px),
+      linear-gradient(180deg,#a06a35,#7a4d24);
+    border:1px solid rgba(0,0,0,0.25);
+    border-radius:8px;
+    padding:12px 10px 10px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 4px 8px rgba(0,0,0,0.35);
+  }
   .stall-goods{display:flex;flex-direction:column;gap:8px;}
   .stall-good{
-    background:rgba(0,0,0,0.18);border-radius:8px;padding:7px 9px;
-    font-size:0.85rem;
+    background:rgba(16,34,31,0.75);border-radius:8px;padding:8px 9px;
+    font-size:0.85rem;border:1px solid rgba(255,255,255,0.08);
   }
-  .stall-good-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-  .stall-good-name{flex:1;}
+  .stall-good-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .stall-good-emoji{font-size:1.4rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));}
+  .stall-good-name{flex:1;font-size:0.82rem;}
   .stall-good-price{color:var(--lantern);font-weight:700;}
   .stall-good-controls{display:flex;gap:6px;align-items:center;}
   .stall-good-controls .qty-input{width:44px;}
-  .stall-empty-note{color:#9fb8ae;font-size:0.75rem;font-style:italic;padding:4px 0 0;}
+  .stall-empty-note{color:#e8dcc4;font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
 
   .empty{color:#8fa39c;font-size:0.85rem;padding:8px 0;}
   .toast{
@@ -316,7 +350,11 @@ function render(s){
   renderLeaderboard(s.leaderboard, s.student.name);
 }
 
+let itemEmojiMap = {};
+function itemEmoji(name){ return itemEmojiMap[name] || '📦'; }
+
 function renderSupplier(items){
+  items.forEach(it => itemEmojiMap[it.itemName] = it.emoji || '📦');
   const el = document.getElementById('supplierList');
   el.innerHTML = items.map(it => `
     <div class="item-row">
@@ -332,9 +370,9 @@ function renderSupplier(items){
 // อวตาร์แม่ค้า/พ่อค้า สุ่มแบบ deterministic ตามชื่อ (คนเดิมได้อวตาร์เดิมเสมอ)
 const VENDOR_EMOJIS = ['🧕','👩‍🌾','👨‍🌾','🧑‍🍳','👩‍🍳','👨‍🍳','🧔','👵','👴','🙋‍♀️','🙋‍♂️','👩‍🦱','👨‍🦱','🧑‍🦳','👩‍🦳'];
 const AWNING_PALETTES = [
-  ['#e0672c','#f2a541'], ['#3c8f6f','#7fd8b8'], ['#c94f6d','#f2a541'],
-  ['#4a7fbf','#7fd8b8'], ['#b3762c','#f2c46a'], ['#7f5aa2','#c99ee0'],
-  ['#2c8f8f','#7fd8d8'], ['#a24a3c','#e0916b']
+  ['#d1453a','#f4ecd8'], ['#2f8f6f','#f4ecd8'], ['#c94f8a','#f4ecd8'],
+  ['#3f6fbf','#f4ecd8'], ['#c98a2c','#f4ecd8'], ['#7f5aa2','#f4ecd8'],
+  ['#2c8f8f','#f4ecd8'], ['#b25a3c','#f4ecd8']
 ];
 function hashStr(str){
   let h = 0;
@@ -360,6 +398,7 @@ function renderMarket(listings, ended){
     const goodsHtml = goods.map(l => `
       <div class="stall-good">
         <div class="stall-good-top">
+          <div class="stall-good-emoji">${itemEmoji(l.itemName)}</div>
           <div class="stall-good-name">${l.itemName} <span class="stall-tag">(เหลือ ${l.qty})</span></div>
           <div class="stall-good-price">${l.price} บ.</div>
         </div>
@@ -371,14 +410,18 @@ function renderMarket(listings, ended){
     `).join('');
     return `
       <div class="stall" style="--awning-a:${a};--awning-b:${b}">
-        <div class="stall-header">
+        <div class="stall-roof"></div>
+        <div class="stall-posts"></div>
+        <div class="stall-sign">
           <div class="stall-avatar" style="background:${a}">${vendorEmoji(sellerName)}</div>
           <div>
             <div class="stall-seller">แผง${sellerName}</div>
             <div class="stall-tag">${goods.length} รายการ</div>
           </div>
         </div>
-        <div class="stall-goods">${goodsHtml}</div>
+        <div class="stall-counter">
+          <div class="stall-goods">${goodsHtml}</div>
+        </div>
       </div>
     `;
   }).join('');
