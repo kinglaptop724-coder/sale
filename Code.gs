@@ -90,7 +90,7 @@ function setupCore() {
 
   const shops = getOrCreateSheet(ss, SHEETS.SHOPS);
   shops.clear();
-  shops.getRange('A1:E1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt']]);
+  shops.getRange('A1:F1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt', 'tagline']]);
 }
 
 function setup() {
@@ -171,6 +171,8 @@ function doPost(e) {
       case 'teacherStart': result = handleTeacherStart(body); break;
       case 'teacherEnd': result = handleTeacherEnd(body); break;
       case 'teacherReset': result = handleTeacherReset(body); break;
+      case 'teacherGetConfig': result = handleTeacherGetConfig(body); break;
+      case 'teacherUpdateConfig': result = handleTeacherUpdateConfig(body); break;
       case 'buyFromSupplier': result = handleBuyFromSupplier(body); break;
       case 'openShop': result = handleOpenShop(body); break;
       case 'updateShop': result = handleUpdateShop(body); break;
@@ -295,7 +297,10 @@ function ensureShopsSheet() {
   let sh = ss.getSheetByName(SHEETS.SHOPS);
   if (!sh) {
     sh = ss.insertSheet(SHEETS.SHOPS);
-    sh.getRange('A1:E1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt']]);
+    sh.getRange('A1:F1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt', 'tagline']]);
+  } else if (sh.getLastColumn() < 6) {
+    // ชีตเก่าที่ยังไม่มีคอลัมน์ tagline (สร้างก่อนอัปเดตฟีเจอร์นี้) -> เพิ่มคอลัมน์ให้อัตโนมัติ
+    sh.getRange('F1').setValue('tagline');
   }
   return sh;
 }
@@ -320,15 +325,16 @@ function isShopOpen(shop) {
   return !!shop && shop.isOpen === 'TRUE';
 }
 
-function saveShop(studentId, shopName, styleId, isOpen) {
+function saveShop(studentId, shopName, styleId, isOpen, tagline) {
   const sh = ensureShopsSheet();
   const rows = rowsToObjects(sh);
   const existing = rows.find(r => r.studentId === studentId);
   const openedAt = (existing && existing.openedAt) ? existing.openedAt : new Date().toISOString();
+  const taglineValue = tagline !== undefined ? tagline : (existing ? (existing.tagline || '') : '');
   if (existing) {
-    sh.getRange(existing._row, 1, 1, 5).setValues([[studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt]]);
+    sh.getRange(existing._row, 1, 1, 6).setValues([[studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt, taglineValue]]);
   } else {
-    sh.appendRow([studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt]);
+    sh.appendRow([studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt, taglineValue]);
   }
 }
 
@@ -409,6 +415,7 @@ function handleState(body) {
           sellerName: l.sellerName,
           shopName: (sellerShop && sellerShop.isOpen === 'TRUE') ? sellerShop.shopName : ('แผง' + l.sellerName),
           styleId: (sellerShop && sellerShop.isOpen === 'TRUE') ? sellerShop.styleId : null,
+          shopTagline: (sellerShop && sellerShop.isOpen === 'TRUE') ? (sellerShop.tagline || '') : '',
           itemName: l.itemName, qty: l.qty, price: l.price
         };
       }),
@@ -418,7 +425,8 @@ function handleState(body) {
     myShop: {
       opened: isShopOpen(myShop),
       name: myShop ? myShop.shopName : '',
-      styleId: myShop ? myShop.styleId : TRUCK_STYLES[0].id
+      styleId: myShop ? myShop.styleId : TRUCK_STYLES[0].id,
+      tagline: myShop ? (myShop.tagline || '') : ''
     }
   };
 }
@@ -518,6 +526,64 @@ function handleTeacherReset(body) {
   return { ok: true, reset: true, message: 'รีเซ็ตข้อมูลเรียบร้อยแล้ว รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้น' };
 }
 
+function handleTeacherGetConfig(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  const cfg = getConfigMap();
+  return {
+    ok: true,
+    config: {
+      GAME_NAME: cfg.GAME_NAME || '',
+      JOIN_CODE: cfg.JOIN_CODE || '',
+      START_CASH: Number(cfg.START_CASH) || 0,
+      ROUND_MINUTES: Number(cfg.ROUND_MINUTES) || 0,
+      TRUCK_COST: getTruckCost(),
+      TEACHER_KEY: getTeacherKey()
+    }
+  };
+}
+
+function handleTeacherUpdateConfig(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  const c = body.config || {};
+
+  const gameName = String(c.GAME_NAME || '').trim();
+  if (!gameName) return { error: 'กรุณาตั้งชื่อเกม' };
+
+  const joinCode = String(c.JOIN_CODE || '').trim().toUpperCase();
+  if (!joinCode) return { error: 'กรุณาตั้งรหัสห้อง' };
+
+  const startCash = Number(c.START_CASH);
+  if (isNaN(startCash) || startCash < 0) return { error: 'เงินเริ่มต้นต้องเป็นตัวเลขไม่ติดลบ' };
+
+  const roundMinutes = Number(c.ROUND_MINUTES);
+  if (isNaN(roundMinutes) || roundMinutes <= 0) return { error: 'เวลาต่อรอบต้องมากกว่า 0 นาที' };
+
+  const truckCost = Number(c.TRUCK_COST);
+  if (isNaN(truckCost) || truckCost < 0) return { error: 'ค่าเปิดร้านรถขายของต้องเป็นตัวเลขไม่ติดลบ' };
+
+  const teacherKey = String(c.TEACHER_KEY || '').trim();
+  if (!teacherKey || teacherKey.length < 4) return { error: 'รหัสครูต้องมีอย่างน้อย 4 ตัวอักษร' };
+
+  setConfig('GAME_NAME', gameName);
+  setConfig('JOIN_CODE', joinCode);
+  setConfig('START_CASH', startCash);
+  setConfig('ROUND_MINUTES', roundMinutes);
+  setConfig('TRUCK_COST', truckCost);
+  setConfig('TEACHER_KEY', teacherKey);
+
+  return {
+    ok: true,
+    config: {
+      GAME_NAME: gameName,
+      JOIN_CODE: joinCode,
+      START_CASH: startCash,
+      ROUND_MINUTES: roundMinutes,
+      TRUCK_COST: truckCost,
+      TEACHER_KEY: teacherKey
+    }
+  };
+}
+
 function handleBuyFromSupplier(body) {
   const student = findStudent(body.studentId);
   if (!student) return { error: 'ไม่พบผู้เล่น' };
@@ -543,6 +609,8 @@ function handleOpenShop(body) {
   const shopName = String(body.shopName || '').trim();
   if (!shopName) return { error: 'ตั้งชื่อร้านด้วยนะ' };
   if (shopName.length > 24) return { error: 'ชื่อร้านยาวไปหน่อย (ไม่เกิน 24 ตัวอักษร)' };
+  const tagline = String(body.tagline || '').trim();
+  if (tagline.length > 40) return { error: 'คำโปรยร้านยาวไปหน่อย (ไม่เกิน 40 ตัวอักษร)' };
 
   const style = getTruckStyle(body.styleId);
   const existing = getShop(student.id);
@@ -552,8 +620,8 @@ function handleOpenShop(body) {
   if (student.cash < cost) return { error: 'เงินไม่พอซื้อรถขายของ (ต้องมี ' + cost + ' บ.)' };
 
   updateStudentCash(student.id, student.cash - cost);
-  saveShop(student.id, shopName, style.id, true);
-  return { ok: true, spent: cost, shop: { name: shopName, styleId: style.id, opened: true } };
+  saveShop(student.id, shopName, style.id, true, tagline);
+  return { ok: true, spent: cost, shop: { name: shopName, styleId: style.id, tagline, opened: true } };
 }
 
 function handleUpdateShop(body) {
@@ -565,10 +633,12 @@ function handleUpdateShop(body) {
 
   const shopName = String(body.shopName || '').trim() || existing.shopName;
   if (shopName.length > 24) return { error: 'ชื่อร้านยาวไปหน่อย (ไม่เกิน 24 ตัวอักษร)' };
+  const tagline = body.tagline !== undefined ? String(body.tagline || '').trim() : (existing.tagline || '');
+  if (tagline.length > 40) return { error: 'คำโปรยร้านยาวไปหน่อย (ไม่เกิน 40 ตัวอักษร)' };
   const style = getTruckStyle(body.styleId || existing.styleId);
 
-  saveShop(student.id, shopName, style.id, true);
-  return { ok: true, shop: { name: shopName, styleId: style.id, opened: true } };
+  saveShop(student.id, shopName, style.id, true, tagline);
+  return { ok: true, shop: { name: shopName, styleId: style.id, tagline, opened: true } };
 }
 
 function handleListForSale(body) {
