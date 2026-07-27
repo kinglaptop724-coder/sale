@@ -68,6 +68,19 @@
   .pill.on{background:rgba(95,207,157,0.18);border-color:var(--jade);color:var(--jade);}
   .pill.off{background:rgba(226,100,95,0.14);border-color:var(--loss);color:#ffb3b3;}
 
+  .btn{
+    padding:8px 14px;border:none;border-radius:9px;cursor:pointer;font-weight:700;
+    font-size:0.82rem;white-space:nowrap;font-family:inherit;letter-spacing:0.1px;
+    transition:filter .12s, transform .12s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;filter:none;transform:none;}
+  .btn-start{background:linear-gradient(135deg,var(--jade),#3fa87f);color:#082d20;}
+  .btn-end{background:linear-gradient(135deg,var(--lantern),var(--ember));color:var(--ink);}
+  .btn-reset{background:transparent;border:1px solid var(--loss);color:var(--loss);}
+  .btn-start:hover,.btn-end:hover{filter:brightness(1.12);}
+  .btn-reset:hover{background:rgba(226,100,95,0.12);}
+
   #login{
     max-width:400px;margin:12vh auto;padding:34px 30px;
     background:linear-gradient(180deg, var(--panel), var(--panel-2));
@@ -177,6 +190,26 @@
     padding:7px 12px;border-radius:20px;font-size:0.78rem;cursor:pointer;font-family:inherit;
   }
   .btn-logout:hover{border-color:var(--loss);color:var(--loss);}
+
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:20;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    max-width:380px;width:100%;padding:26px 24px;
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--loss);border-radius:18px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+  .modal h3{margin:0 0 8px;color:var(--loss);font-size:1.1rem;}
+  .modal p{margin:0 0 14px;font-size:0.85rem;color:var(--paper-dim);line-height:1.5;}
+  .modal input{
+    width:100%;padding:11px 12px;margin-bottom:12px;border-radius:9px;border:1px solid var(--border-soft);
+    background:var(--night);color:var(--paper);font-size:0.9rem;font-family:inherit;
+  }
+  .modal-actions{display:flex;gap:8px;}
+  .modal-actions .btn{flex:1;}
 </style>
 </head>
 <body>
@@ -195,7 +228,23 @@
   <div class="stats">
     <span class="pill" id="statusPill">-</span>
     <span class="pill" id="timerPill">-</span>
+    <button class="btn btn-start" id="btnStart" onclick="doStart()">▶️ เริ่มเกม</button>
+    <button class="btn btn-end" id="btnEnd" onclick="doEnd()">⏹️ จบเกม</button>
+    <button class="btn btn-reset" id="btnReset" onclick="openResetModal()">รีเซ็ต</button>
     <button class="btn-logout" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resetOverlay">
+  <div class="modal">
+    <h3>⚠️ รีเซ็ตเกมทั้งหมด</h3>
+    <p>การกระทำนี้จะล้างข้อมูลผู้เล่น สต๊อก ร้านค้า และธุรกรรมทั้งหมดทันที และไม่สามารถกู้คืนได้<br>
+    พิมพ์ <strong>RESET</strong> ด้านล่างเพื่อยืนยัน</p>
+    <input id="resetConfirmInput" type="text" placeholder="พิมพ์ RESET" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn btn-reset" onclick="closeResetModal()">ยกเลิก</button>
+      <button class="btn btn-end" onclick="doReset()">ยืนยันรีเซ็ต</button>
+    </div>
   </div>
 </div>
 
@@ -305,6 +354,44 @@ async function fetchState(){
   render(s);
 }
 
+async function doStart(){
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true;
+  const r = await api('teacherStart', { key: teacherKey });
+  btn.disabled = false;
+  if(r.error){ alert(r.error); return; }
+  render(r);
+}
+
+async function doEnd(){
+  const btn = document.getElementById('btnEnd');
+  btn.disabled = true;
+  const r = await api('teacherEnd', { key: teacherKey });
+  btn.disabled = false;
+  if(r.error){ alert(r.error); return; }
+  render(r);
+}
+
+function openResetModal(){
+  document.getElementById('resetConfirmInput').value = '';
+  document.getElementById('resetOverlay').classList.add('show');
+}
+
+function closeResetModal(){
+  document.getElementById('resetOverlay').classList.remove('show');
+}
+
+async function doReset(){
+  const confirmText = document.getElementById('resetConfirmInput').value.trim();
+  if(confirmText !== 'RESET'){ alert('พิมพ์ RESET ให้ตรงก่อนนะ'); return; }
+  const r = await api('teacherReset', { key: teacherKey, confirm: confirmText });
+  closeResetModal();
+  if(r.error){ alert(r.error); return; }
+  // รีเซ็ตสำเร็จ: รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้นแล้ว session เดิมใช้ต่อไม่ได้
+  doLogout();
+  alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้น (teacher123) กรุณาเข้าสู่ระบบใหม่ หรือไปตั้งรหัสใหม่ที่แท็บ Config บน Sheet');
+}
+
 function fmtTime(sec){
   if(sec === null) return '⏳ รอครูเริ่มเกม';
   const m = Math.floor(sec/60), s = sec%60;
@@ -335,6 +422,10 @@ function render(s){
   const timerPill = document.getElementById('timerPill');
   timerPill.textContent = fmtTime(s.timeLeftSeconds);
   timerPill.className = 'pill' + (s.timeLeftSeconds !== null && s.timeLeftSeconds <= 60 ? ' low' : '');
+
+  const running = s.gameStarted && !s.gameEnded;
+  document.getElementById('btnStart').disabled = running;
+  document.getElementById('btnEnd').disabled = !running;
 
   document.getElementById('kpiPlayers').textContent = s.playerCount;
   document.getElementById('kpiShops').textContent = s.shopsOpenCount;
