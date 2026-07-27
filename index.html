@@ -387,20 +387,78 @@
   }
   .gameover h2{color:var(--orange-dark);font-size:1.4rem;margin-top:0;}
   .gameover p{color:var(--wood-dark);}
-  /* ===== โค้ดใหม่: แยกโซนสีฟ้าและสีส้ม ===== */
-  .zone-blue {
-    background: linear-gradient(180deg, rgba(191,234,255,0.4), rgba(255,255,255,0.4));
-    border: 4px solid var(--navy-2);
-    border-radius: 22px;
-    padding: 16px;
+  /* ===== สไตล์หน้าต่างเกม (อ้างอิงจาก cover-banner_2.webp) ===== */
+  .game-window {
+    border: 4px solid #2b3658; /* เส้นขอบสีน้ำเงินเข้ม */
+    border-radius: 12px;
+    overflow: hidden; /* ไม่ให้ส่วนหัวล้นกรอบ */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
-  
-  .zone-orange {
-    background: linear-gradient(180deg, rgba(255,210,63,0.2), rgba(255,255,255,0.4));
-    border: 4px solid var(--orange-dark);
-    border-radius: 22px;
-    padding: 16px;
+
+  /* ส่วนหัวของกล่อง (Header) */
+  .window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 4px solid #2b3658;
+    font-weight: bold;
+    color: #1a1a1a;
   }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* กล่องแสดงเหรียญทอง */
+  .coin-box {
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  /* ปุ่มกากบาทปิดหน้าต่าง */
+  .close-btn {
+    background-color: #e75a50; /* สีแดง */
+    color: white;
+    border: 2px solid #2b3658;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* พื้นที่เนื้อหาด้านใน */
+  .window-body {
+    padding: 16px;
+    min-height: 500px;
+  }
+
+  /* --- ธีมสีส้ม (หน้าขายของ) --- */
+  .window-orange .window-header { background-color: #f69c76; } /* สีส้มหัวกล่อง */
+  .window-orange .window-body { background-color: #faeed4; } /* สีครีมเนื้อหา */
+
+  /* --- ธีมสีฟ้า (หน้าซื้อของ) --- */
+  .window-blue .window-header { background-color: #7abdf4; } /* สีฟ้าหัวกล่อง */
+  .window-blue .window-body { background-color: #e5f0fa; } /* สีฟ้าอ่อนเนื้อหา */
 </style>
 </head>
 <body>
@@ -439,40 +497,58 @@
 </div>
 
 <div class="grid">
-  <!-- โซนสีฟ้า: ส่วนของการซื้อสินค้าและตลาดกลาง -->
-  <div class="zone-blue">
-    <div class="card">
-      <h3>🏭 ซื้อจากซัพพลายเออร์กลาง (ราคาขยับตลอดเวลา)</h3>
-      <div id="supplierList"></div>
+  <!-- โซนซ้าย: ธีมสีส้ม (หน้าขายของ) -->
+  <div class="game-window window-orange">
+    <!-- หัวกล่อง -->
+    <div class="window-header">
+      <div class="header-left">
+        <span>🏪</span> หน้าขายของ
+      </div>
+      <div class="header-right">
+        <div class="coin-box">🪙 12,450 <span>+</span></div>
+        <button class="close-btn">X</button>
+      </div>
     </div>
-
-    <div class="card">
-      <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount" class="market-shop-count"></span></h3>
-      <div id="marketList" class="stall-grid"></div>
-      <div id="marketMoreBtnBox" class="market-more-box"></div>
+    <!-- เนื้อหาด้านใน -->
+    <div class="window-body">
+      <div class="card">
+        <h3>🚚 รถขายของของฉัน</h3>
+        <div id="shopBox"></div>
+      </div>
+      <div class="card">
+        <h3>🎒 สต๊อกของฉัน</h3>
+        <div id="myInventory"></div>
+      </div>
+      <div class="card">
+        <h3>🏷️ ของที่ฉันวางขายอยู่</h3>
+        <div id="myListings"></div>
+      </div>
     </div>
   </div>
 
-  <!-- โซนสีส้ม: ส่วนของการจัดการร้านค้าและอันดับ -->
-  <div class="zone-orange">
-    <div class="card">
-      <h3>🚚 รถขายของของฉัน</h3>
-      <div id="shopBox"></div>
+  <!-- โซนขวา: ธีมสีฟ้า (หน้าซื้อของ) -->
+  <div class="game-window window-blue">
+    <!-- หัวกล่อง -->
+    <div class="window-header">
+      <div class="header-left">
+        <span>🛒</span> หน้าซื้อของ
+      </div>
+      <div class="header-right">
+        <div class="coin-box">🪙 12,450 <span>+</span></div>
+        <button class="close-btn">X</button>
+      </div>
     </div>
-
-    <div class="card">
-      <h3>🎒 สต๊อกของฉัน</h3>
-      <div id="myInventory"></div>
-    </div>
-
-    <div class="card">
-      <h3>🏷️ ของที่ฉันวางขายอยู่</h3>
-      <div id="myListings"></div>
-    </div>
-
-    <div class="card">
-      <h3>🏆 กระดานผู้นำ</h3>
-      <div id="leaderboard"></div>
+    <!-- เนื้อหาด้านใน -->
+    <div class="window-body">
+      <div class="card">
+        <h3>🏭 ซื้อจากซัพพลายเออร์กลาง</h3>
+        <div id="supplierList"></div>
+      </div>
+      <div class="card">
+        <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount"></span></h3>
+        <div id="marketList" class="stall-grid"></div>
+        <div id="marketMoreBtnBox"></div>
+      </div>
     </div>
   </div>
 </div>
