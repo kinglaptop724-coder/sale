@@ -197,6 +197,13 @@
     display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
     gap:34px 18px;
   }
+  .market-shop-count{font-size:0.78rem;font-weight:500;color:var(--paper-dim);}
+  .market-more-box{text-align:center;margin-top:16px;}
+  .btn-market-more{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--paper);
+    padding:10px 20px;border-radius:20px;font-size:0.85rem;
+  }
+  .btn-market-more:hover{background:rgba(255,174,0,0.14);border-color:var(--lantern);}
   .truck{
     position:relative;
     padding-top:6px;
@@ -397,8 +404,9 @@
     </div>
 
     <div class="card">
-      <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ)</h3>
+      <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount" class="market-shop-count"></span></h3>
       <div id="marketList" class="stall-grid"></div>
+      <div id="marketMoreBtnBox" class="market-more-box"></div>
     </div>
   </div>
 
@@ -746,9 +754,22 @@ function hashStr(str){
 function vendorEmoji(name){ return VENDOR_EMOJIS[hashStr(name) % VENDOR_EMOJIS.length]; }
 function vendorPalette(name){ return AWNING_PALETTES[hashStr(name) % AWNING_PALETTES.length]; }
 
+const MARKET_PAGE_SIZE = 6;
+let marketExpanded = false;
+let lastMarketShops = null;
+let lastMarketEnded = false;
+
 function renderMarket(listings, ended){
   const el = document.getElementById('marketList');
-  if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>'; return; }
+  lastMarketEnded = ended;
+
+  if(!listings.length){
+    el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>';
+    lastMarketShops = null;
+    document.getElementById('marketShopCount').textContent = '';
+    document.getElementById('marketMoreBtnBox').innerHTML = '';
+    return;
+  }
 
   // จัดกลุ่มของตามคนขาย ให้แต่ละคนมีรถขายของเป็นของตัวเอง
   const bySeller = {};
@@ -758,7 +779,20 @@ function renderMarket(listings, ended){
     bySeller[key].goods.push(l);
   });
 
-  const html = Object.values(bySeller).map(({sellerName, shopName, styleId, shopTagline, goods}) => {
+  lastMarketShops = Object.values(bySeller);
+  document.getElementById('marketShopCount').textContent = `· ${lastMarketShops.length} ร้าน`;
+  renderMarketGrid();
+}
+
+function renderMarketGrid(){
+  const el = document.getElementById('marketList');
+  const btnBox = document.getElementById('marketMoreBtnBox');
+  if(!lastMarketShops){ return; }
+
+  const total = lastMarketShops.length;
+  const shownShops = marketExpanded ? lastMarketShops : lastMarketShops.slice(0, MARKET_PAGE_SIZE);
+
+  const html = shownShops.map(({sellerName, shopName, styleId, shopTagline, goods}) => {
     const st = styleId ? styleById(styleId) : null;
     const emoji = st ? st.emoji : vendorEmoji(sellerName);
     const colorA = st ? st.colorA : vendorPalette(sellerName)[0];
@@ -775,7 +809,7 @@ function renderMarket(listings, ended){
         </div>
         <div class="truck-good-controls">
           <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
-          <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}', this)">ซื้อ</button>
+          <button class="btn btn-buy" ${lastMarketEnded?'disabled':''} onclick="buyListing('${l.id}', this)">ซื้อ</button>
         </div>
       </div>
     `).join('');
@@ -797,6 +831,19 @@ function renderMarket(listings, ended){
     `;
   }).join('');
   setHtmlPreserveInputs(el, html);
+
+  if(total <= MARKET_PAGE_SIZE){
+    btnBox.innerHTML = '';
+  } else if(marketExpanded){
+    btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">▲ ย่อรายการ</button>`;
+  } else {
+    btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">🔽 ดูร้านค้าทั้งหมด (อีก ${total - MARKET_PAGE_SIZE} ร้าน)</button>`;
+  }
+}
+
+function toggleMarketExpand(){
+  marketExpanded = !marketExpanded;
+  renderMarketGrid();
 }
 
 function renderInventory(inv, ended, shopOpened){
