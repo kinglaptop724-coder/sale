@@ -279,6 +279,14 @@
   }
   .truck-name{font-weight:800;font-size:0.85rem;line-height:1.15;color:#1c1c1c;}
   .truck-tag{font-size:0.68rem;color:rgba(44,28,13,0.65);}
+  /* สร้างกล่องป้ายชื่อร้านสีขาว ทับบนลายหลังคา */
+  .truck-header > div:not(.truck-emoji-badge) {
+    background: #ffffff;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+  }
   .truck-tagline{
     position:relative;z-index:1;
     font-size:0.72rem;font-style:italic;color:var(--green-dark);font-weight:600;
