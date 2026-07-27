@@ -184,7 +184,11 @@
     box-shadow:0 4px 0 var(--gold-dark); /* ใส่เงาใต้ปุ่มให้ดูมีมิติเหมือนปุ่มซื้อ */
     min-width:52px;
   }
-  .item-price{min-width:74px;text-align:right;justify-content:flex-end;}
+  .item-price {
+    min-width: 48px; /* ลดความกว้างให้พอดีกับตัวเลข */
+    text-align: center; /* จัดตัวเลขให้อยู่กึ่งกลาง */
+    justify-content: center;
+  }
 
   .qty-input{
     width:52px;padding:7px 4px;border-radius:8px;border:2px solid var(--line);
