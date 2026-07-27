@@ -156,44 +156,59 @@ function setConfig(key, value) {
   sh.appendRow([key, value]);
 }
 
+// action ที่แค่ "อ่าน" ข้อมูล ไม่ได้แก้ไขอะไร ไม่จำเป็นต้องใช้ Lock เลย
+// (สำคัญมาก: หน้าเว็บนักเรียนแต่ละคน poll 'state' ทุก 3 วิ ถ้าบังคับให้ทุกคนต้องแย่ง
+//  Lock เดียวกันแม้แต่ตอนแค่อ่านข้อมูล คิวจะยาวมากเมื่อมีคนเล่นพร้อมกันหลายคน
+//  จนทำให้ action อื่น เช่น ซื้อ/ขาย/เปิดร้าน ต้องรอนานเกินจน Lock timeout)
+const READ_ONLY_ACTIONS = ['state', 'teacherState', 'teacherGetConfig'];
+
 // ---------- ENTRY POINT ----------
 function doPost(e) {
-  const lock = LockService.getScriptLock();
-  let gotLock = false;
   try {
-    // สำคัญ: waitLock ต้องอยู่ใน try ด้วย ไม่งั้นถ้าแย่งล็อกไม่ได้ (คนเล่นพร้อมกันเยอะ)
-    // มันจะ throw ออกไปนอก try/catch ทำให้ Apps Script ตอบกลับเป็นหน้า error (ไม่ใช่ JSON)
-    // ฝั่งหน้าเว็บจะ parse JSON ไม่ได้ แล้วค้างตลอดไป (ปุ่มไม่ถูกปลดล็อก)
-    lock.waitLock(20000);
-    gotLock = true;
-
     const body = JSON.parse(e.postData.contents);
     const action = body.action;
-    let result;
-    switch (action) {
-      case 'join': result = handleJoin(body); break;
-      case 'state': result = handleState(body); break;
-      case 'teacherState': result = handleTeacherState(body); break;
-      case 'teacherStart': result = handleTeacherStart(body); break;
-      case 'teacherEnd': result = handleTeacherEnd(body); break;
-      case 'teacherReset': result = handleTeacherReset(body); break;
-      case 'teacherGetConfig': result = handleTeacherGetConfig(body); break;
-      case 'teacherUpdateConfig': result = handleTeacherUpdateConfig(body); break;
-      case 'buyFromSupplier': result = handleBuyFromSupplier(body); break;
-      case 'openShop': result = handleOpenShop(body); break;
-      case 'updateShop': result = handleUpdateShop(body); break;
-      case 'listForSale': result = handleListForSale(body); break;
-      case 'cancelListing': result = handleCancelListing(body); break;
-      case 'buyListing': result = handleBuyListing(body); break;
-      default: result = { error: 'ไม่รู้จัก action: ' + action };
+
+    if (READ_ONLY_ACTIONS.indexOf(action) !== -1) {
+      return jsonResponse(runAction(action, body));
     }
-    return jsonResponse(result);
+
+    // action ที่เหลือ = เขียน/แก้ไขข้อมูล ต้องกันชนกันด้วย Lock
+    const lock = LockService.getScriptLock();
+    let gotLock = false;
+    try {
+      // สำคัญ: waitLock ต้องอยู่ใน try ด้วย ไม่งั้นถ้าแย่งล็อกไม่ได้
+      // มันจะ throw ออกไปนอก try/catch ทำให้ Apps Script ตอบกลับเป็นหน้า error (ไม่ใช่ JSON)
+      // ฝั่งหน้าเว็บจะ parse JSON ไม่ได้ แล้วค้างตลอดไป (ปุ่มไม่ถูกปลดล็อก)
+      lock.waitLock(20000);
+      gotLock = true;
+      return jsonResponse(runAction(action, body));
+    } finally {
+      if (gotLock) lock.releaseLock();
+    }
   } catch (err) {
     // ไม่ว่าจะ error จากขั้นตอนไหน (รวมถึงแย่งล็อกไม่ได้) ก็ยังส่ง JSON กลับเสมอ
     // เพื่อให้หน้าเว็บโชว์ error แล้วปลดล็อกปุ่มได้ ไม่ค้าง
     return jsonResponse({ error: 'เซิร์ฟเวอร์ไม่ว่าง กรุณาลองใหม่อีกครั้ง (' + String(err) + ')' });
-  } finally {
-    if (gotLock) lock.releaseLock();
+  }
+}
+
+function runAction(action, body) {
+  switch (action) {
+    case 'join': return handleJoin(body);
+    case 'state': return handleState(body);
+    case 'teacherState': return handleTeacherState(body);
+    case 'teacherStart': return handleTeacherStart(body);
+    case 'teacherEnd': return handleTeacherEnd(body);
+    case 'teacherReset': return handleTeacherReset(body);
+    case 'teacherGetConfig': return handleTeacherGetConfig(body);
+    case 'teacherUpdateConfig': return handleTeacherUpdateConfig(body);
+    case 'buyFromSupplier': return handleBuyFromSupplier(body);
+    case 'openShop': return handleOpenShop(body);
+    case 'updateShop': return handleUpdateShop(body);
+    case 'listForSale': return handleListForSale(body);
+    case 'cancelListing': return handleCancelListing(body);
+    case 'buyListing': return handleBuyListing(body);
+    default: return { error: 'ไม่รู้จัก action: ' + action };
   }
 }
 
