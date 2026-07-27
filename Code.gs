@@ -1,1239 +1,852 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ตลาดนัดนักเรียน</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
-<style>
-  :root{
-    /* ===== โทนสี: ธีมเกมพิกเซล ท้องฟ้าสดใส ร้านค้าไม้สีสันจัดจ้าน ===== */
-    --sky:#bfeaff;
-    --cream: #fff3d6;
-    --cream-2: #ffe6ad;
-    --panel: #fffaf0;
-    --wood: #a06a3c;
-    --wood-dark: #6b4423;
-    --ink: #2c1c0d;
-    --navy: #1c3f73;
-    --navy-2: #254e8f;
-    --gold: #ffd23f;
-    --gold-dark: #dd9d0e;
-    --green: #4cc26c;
-    --green-dark: #2d8a48;
-    --orange: #ff9a3c;
-    --orange-dark: #e2701a;
-    --red: #ff5a52;
-    --red-dark: #c73a32;
-    --line: #2c1c0d;
-    --line-soft: rgba(44,28,13,0.25);
-    --pixel-font: 'Kanit', 'Segoe UI', sans-serif;
-    font-variant-numeric: tabular-nums; /* เพิ่มบรรทัดนี้เพื่อให้ตัวเลขตรงกันพอดี */
-    font-family: 'Kanit', 'Segoe UI', sans-serif;
-  }
-  *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    margin:0;
-    /* เปลี่ยนสีพื้นหลังและเพิ่มลายตาราง */
-    background-color: #f4f5f7; 
-    background-image: 
-      linear-gradient(#e2e4e9 1px, transparent 1px),
-      linear-gradient(90deg, #e2e4e9 1px, transparent 1px);
-    background-size: 20px 20px; /* ขนาดของช่องตาราง */
-    background-position: center top;
+/**
+ * ==========================================================
+ * ตลาดนัดนักเรียน (Student Market Flip) - Backend
+ * Google Apps Script + Google Sheet เป็นฐานข้อมูล
+ * ==========================================================
+ *
+ * วิธีติดตั้ง:
+ * 1. สร้าง Google Sheet ใหม่ (ไฟล์เปล่าก็ได้)
+ * 2. เมนู Extensions > Apps Script
+ * 3. ลบโค้ดเดิมทั้งหมด แล้ววางโค้ดไฟล์นี้ทั้งไฟล์
+ * 4. เลือกฟังก์ชัน setup แล้วกด Run (ครั้งแรกจะขอ authorize ให้กด Allow)
+ *    -> จะสร้างชีตและข้อมูลตั้งต้นให้อัตโนมัติ
+ * 5. Deploy > New deployment > เลือกประเภท "Web app"
+ *    - Execute as: Me
+ *    - Who has access: Anyone
+ * 6. คัดลอก Web app URL ไปใส่ในไฟล์ index.html (ตัวแปร API_URL)
+ * 7. กลับมาที่ Google Sheet แท็บ "Config" ตั้งค่ารหัสห้อง (JOIN_CODE) ได้ตามต้องการ
+ * 8. เมื่อพร้อมเริ่มแข่ง ให้ไปที่เมนู "เกมตลาดนัด" > "เริ่มเกม" บน Google Sheet
+ */
+
+const SHEETS = {
+  CONFIG: 'Config',
+  ITEMS: 'Items',
+  STUDENTS: 'Students',
+  INVENTORY: 'Inventory',
+  LISTINGS: 'Listings',
+  TRANSACTIONS: 'Transactions',
+  SHOPS: 'Shops'
+};
+
+// ---------- TRUCK STYLES (ธีมรถขายของให้นักเรียนเลือก) ----------
+const TRUCK_STYLES = [
+  { id: 'red',    label: 'คลาสสิกแดง',     emoji: '🚚', colorA: '#d1453a', colorB: '#f7ded9' },
+  { id: 'green',  label: 'สวนผลไม้เขียว',   emoji: '🚐', colorA: '#2f8f6f', colorB: '#dcf3e9' },
+  { id: 'pink',   label: 'ขนมหวานชมพู',    emoji: '🍦', colorA: '#c94f8a', colorB: '#f8dfec' },
+  { id: 'blue',   label: 'ทะเลฟ้าคราม',    emoji: '🚛', colorA: '#3f6fbf', colorB: '#dde7f7' },
+  { id: 'gold',   label: 'หรูหราทอง',      emoji: '🛻', colorA: '#c98a2c', colorB: '#f8ecd6' },
+  { id: 'purple', label: 'ราตรีม่วง',      emoji: '🚙', colorA: '#7f5aa2', colorB: '#ecdff5' }
+];
+function getTruckStyle(styleId) {
+  return TRUCK_STYLES.find(t => t.id === styleId) || TRUCK_STYLES[0];
+}
+
+// ---------- SETUP ----------
+function setupCore() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const config = getOrCreateSheet(ss, SHEETS.CONFIG);
+  config.clear();
+  config.getRange('A1:B10').setValues([
+    ['KEY', 'VALUE'],
+    ['GAME_NAME', 'ตลาดนัดนักเรียน'],
+    ['JOIN_CODE', 'ROOM1'],
+    ['START_CASH', 1000],
+    ['ROUND_MINUTES', 30],
+    ['GAME_STARTED_AT', ''],
+    ['GAME_ENDED', 'FALSE'],
+    ['LISTING_FEE_PERCENT', 0],
+    ['TRUCK_COST', 50],
+    ['TEACHER_KEY', 'teacher123']
+  ]);
+
+  const items = getOrCreateSheet(ss, SHEETS.ITEMS);
+  items.clear();
+  items.getRange('A1:D1').setValues([['itemName', 'basePrice', 'volatility', 'emoji']]);
+  
+  const newItems = [
+    // 🍡 หมวดขนมและเครื่องดื่ม (ซื้อง่ายขายคล่อง)
+    ['ลูกชิ้นปิ้ง', 15, 0.4, '🍡'],
+    ['ชานมไข่มุก', 35, 0.35, '🧋'],
+    ['ไอศกรีม', 20, 0.45, '🍦'],
+    ['ขนมโตเกียว', 25, 0.3, '🥞'],
+    ['น้ำผลไม้', 20, 0.25, '🧃'],
+    ['ขนมถุง', 15, 0.5, '🍪'],
+    ['มะม่วงจิ้มเกลือ', 20, 0.4, '🥭'],
+    ['เยลลี่หมี', 10, 0.3, '🧸'],
+    ['ไมโลโรงเรียน', 15, 0.2, '🥤'],
+    ['เฟรนช์ฟรายส์', 30, 0.4, '🍟'],
+    ['โดนัท', 25, 0.3, '🍩'],
+    ['ช็อกโกแลต', 20, 0.4, '🍫'],
     
-    color: var(--ink);
-    min-height:100vh;
-    padding-bottom:60px;
-    -webkit-font-smoothing:antialiased;
-    font-weight:500;
-  }
+    // ✏️ หมวดเครื่องเขียนน่ารักๆ (ของมันต้องมี)
+    ['สมุดโน้ต', 15, 0.2, '📓'],
+    ['ยางลบแฟนซี', 12, 0.25, '🧽'],
+    ['ดินสอสี', 55, 0.15, '🖍️'],
+    ['กล่องดินสอ', 45, 0.2, '✏️'],
+    ['กระเป๋าผ้า', 120, 0.3, '👜'],
+    ['กระติกน้ำ', 99, 0.2, '💧'],
+    ['สติ๊กเกอร์', 15, 0.4, '✨'],
+    ['ไม้บรรทัดเยลลี่', 20, 0.2, '📏'],
+    ['สมุดวาดเขียน', 35, 0.2, '📒'],
+    
+    // 🪀 หมวดของเล่นสุดฮิต (ดึงดูดใจสุดๆ)
+    ['สไลม์', 30, 0.4, '🧫'],
+    ['การ์ดเกม', 40, 0.5, '🃏'],
+    ['ลูกแก้ว', 10, 0.35, '🔮'],
+    ['กิ๊บติดผม', 25, 0.3, '🎀'],
+    ['พวงกุญแจ', 35, 0.25, '🔑'],
+    ['ดินน้ำมัน', 25, 0.2, '🟡'],
+    ['รถบังคับ', 150, 0.4, '🏎️'],
+    ['รูบิค', 60, 0.3, '🎲'],
+    ['โยโย่', 45, 0.4, '🪀'],
+    ['ตุ๊กตากระต่าย', 95, 0.3, '🐰'],
 
-  .cover-banner {
-  width: 100%;
-  border-bottom: 5px solid var(--line);
-  box-shadow: 0 6px 0 rgba(0,0,0,0.18);
-  position: relative;
-}
-
-.cover-banner img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-  h1,h2,h3{font-family:inherit;}
-  ::selection{background:var(--gold);color:var(--ink);}
-  :focus-visible{outline:3px solid var(--navy);outline-offset:2px;border-radius:4px;}
-
-  .lightstring{
-    height:10px;width:100%;
-    background:repeating-linear-gradient(90deg, var(--gold) 0 16px, var(--orange) 16px 32px);
-    border-bottom:3px solid var(--line);
-    box-shadow:0 2px 0 rgba(0,0,0,0.15);
-  }
-
-  .topbar{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:12px 20px;
-    background: linear-gradient(180deg, #2c5a9e, var(--navy));
-    border-bottom:4px solid var(--line);
-    position:sticky;top:0;z-index:10;
-    box-shadow:0 4px 0 rgba(0,0,0,0.18);
-  }
-  .topbar h1{font-size:1.05rem;margin:0;letter-spacing:0.2px;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,0.35);}
-  .topbar h1 span:first-child{
-    font-size:1.3rem;background:var(--gold);border:3px solid var(--line);
-    border-radius:50%;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.3);
-  }
-  .topbar h1 span:last-child{color:var(--gold);}
-  .stats{display:flex;gap:10px;align-items:center;font-size:0.9rem;}
-  .cash{
-    font-family:var(--pixel-font);
-    font-weight:400;color:var(--ink);font-size:0.85rem;
-    background:linear-gradient(180deg,#ffe27a,var(--gold));
-    border:3px solid var(--line);
-    padding:8px 14px;border-radius:20px;box-shadow:3px 3px 0 rgba(0,0,0,0.3);
-    display:flex;align-items:center;gap:8px;
-  }
-  .timer{
-    font-family:var(--pixel-font);
-    padding:8px 14px;border-radius:20px;background:#fff;border:3px solid var(--line);
-    font-weight:400;letter-spacing:0.3px;font-size:0.78rem;box-shadow:3px 3px 0 rgba(0,0,0,0.3);
-  }
-  .timer.low{background:var(--red);border-color:var(--line);color:#fff;animation:pixel-pulse 1s infinite steps(2);}
-  @keyframes pixel-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
-
-  #login{
-    max-width:400px;margin:10vh auto;padding:32px 26px;
-    background:var(--panel);
-    border:5px solid var(--line);border-radius:22px;
-    text-align:center;
-    box-shadow:8px 8px 0 rgba(0,0,0,0.3);
-  }
-  #login h2{color:var(--orange-dark);margin:0 0 8px;font-size:1.4rem;font-weight:800;text-shadow:2px 2px 0 rgba(0,0,0,0.12);}
-  #login p.sub{color:var(--wood-dark);font-size:0.85rem;margin:0 0 20px;font-weight:500;line-height:1.5;}
-  #login input{
-    width:100%;padding:13px 14px;margin:7px 0;border-radius:12px;border:3px solid var(--line);
-    background:#fffef8;color:var(--ink);font-size:0.95rem;font-family:inherit;font-weight:500;
-    transition:box-shadow .15s;
-  }
-  #login input:focus{box-shadow:0 0 0 4px rgba(255,154,60,0.35);outline:none;}
-  #login input::placeholder{color:#b0977a;}
-  #login button{
-    width:100%;padding:14px;margin-top:14px;border:3px solid var(--line);border-radius:14px;
-    background:linear-gradient(180deg,#ffb15c,var(--orange));
-    color:var(--ink);font-weight:800;font-size:1rem;cursor:pointer;letter-spacing:0.2px;
-    box-shadow:0 5px 0 var(--orange-dark);
-    transition:transform .1s, box-shadow .1s;
-  }
-  #login button:hover{filter:brightness(1.05);}
-  #login button:active{transform:translateY(5px);box-shadow:0 0 0 var(--orange-dark);}
-  #login .msg{color:var(--red-dark);min-height:20px;font-size:0.85rem;margin-top:10px;font-weight:700;}
-
-  .teacher-access{
-    position:fixed;top:14px;right:16px;z-index:20;
-    background:#fff;border:3px solid var(--line);
-    color:var(--wood-dark);font-family:inherit;font-size:0.78rem;font-weight:700;
-    padding:7px 12px;border-radius:20px;cursor:pointer;
-    box-shadow:3px 3px 0 rgba(0,0,0,0.25);
-    transition:transform .1s;
-  }
-  .teacher-access:hover{transform:translateY(-2px);}
-  .teacher-access:active{transform:translateY(1px);box-shadow:1px 1px 0 rgba(0,0,0,0.25);}
-
-  main{max-width:1600px; /* ขยายให้รองรับจอคอมกว้างๆ */ margin:0 auto;padding:22px 20px;display:none;}
-  main.show{display:block;}
-
-  /* แบ่งเป็น 3 ส่วน: ส้ม(1ส่วน) ฟ้า(1ส่วน) เขียว(1.3ส่วน ให้ตลาดกว้างหน่อย) */
-  .grid{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:18px;align-items:start;}
-
-  .card{
-    background:var(--panel);
-    border:4px solid var(--line);border-radius:18px;
-    padding:16px 18px;margin-bottom:18px;
-    box-shadow:6px 6px 0 rgba(0,0,0,0.18);
-  }
-  .card h3{
-    margin:0 0 14px;font-size:0.95rem;color:var(--ink);font-weight:700;
-    display:flex;align-items:center;gap:10px;
-    padding-bottom:10px;border-bottom:3px dashed var(--line-soft);
-    letter-spacing:0.2px;
-  }
-
-  .item-row{
-    display:flex;align-items:center;gap:10px;padding:9px 6px;
-    border-bottom:2px solid rgba(44,28,13,0.08);font-size:0.9rem;
-    border-radius:10px;
-  }
-  .item-row:hover{background:rgba(255,210,63,0.14);}
-  .item-row:last-child{border-bottom:none;}
-  .emoji{font-size:1.35rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--line);border-radius:8px;flex-shrink:0;}
-  .item-name{flex:1;font-weight:600;}
-
-  .price-tag{
-    display:inline-flex;align-items:center;justify-content:center;
-    font-family:inherit;font-weight:800;font-size:0.88rem;
-    background:linear-gradient(180deg,#ffe27a,var(--gold));
-    color:var(--ink);
-    padding:7px 12px;border-radius:10px; /* โค้งมนเท่ากับปุ่มกด */
-    border:2px solid var(--line);
-    box-shadow:0 4px 0 var(--gold-dark); /* ใส่เงาใต้ปุ่มให้ดูมีมิติเหมือนปุ่มซื้อ */
-    min-width:52px;
-  }
-  .item-price {
-    min-width: 48px; /* ลดความกว้างให้พอดีกับตัวเลข */
-    text-align: center; /* จัดตัวเลขให้อยู่กึ่งกลาง */
-    justify-content: center;
-  }
-
-  .qty-input{
-    width:52px;padding:7px 4px;border-radius:8px;border:2px solid var(--line);
-    background:#fff;color:var(--ink);text-align:center;font-family:inherit;font-size:0.88rem;font-weight:700;
-  }
-  .price-input{
-    width:70px;padding:7px 4px;border-radius:8px;border:2px solid var(--line);
-    background:#fff;color:var(--ink);text-align:center;font-family:inherit;font-size:0.88rem;font-weight:700;
-  }
-  .qty-input:focus,.price-input:focus{box-shadow:0 0 0 3px rgba(255,154,60,0.3);outline:none;}
-
-  .btn{
-    padding:9px 15px;border:2px solid var(--line);border-radius:10px;cursor:pointer;font-weight:800;
-    font-size:0.85rem;white-space:nowrap;font-family:inherit;letter-spacing:0.1px;
-    transition:transform .08s, box-shadow .08s;
-  }
-  .btn:active{transform:translateY(3px);box-shadow:none !important;}
-  .btn-buy{background:linear-gradient(180deg,#7de097,var(--green));color:#0d3d1c;box-shadow:0 4px 0 var(--green-dark);}
-  .btn-sell{background:linear-gradient(180deg,#ffb15c,var(--orange));color:#4a2400;box-shadow:0 4px 0 var(--orange-dark);}
-  .btn-cancel{background:#fff;border:2px solid var(--red);color:var(--red-dark);box-shadow:0 4px 0 rgba(199,58,50,0.35);}
-  .btn-buy:hover,.btn-sell:hover{filter:brightness(1.08);}
-  .btn-cancel:hover{background:rgba(255,90,82,0.08);}
-  .btn:disabled{opacity:0.4;cursor:not-allowed;filter:none;transform:none;box-shadow:none;}
-
-  .inv-item{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:2px solid rgba(44,28,13,0.08);}
-  .inv-item:last-child{border-bottom:none;}
-  .inv-cost{font-size:0.75rem;color:var(--wood-dark);}
-
-  .leaderboard-row{
-    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;
-    position:relative;overflow:hidden;margin-bottom:4px;border:2px solid transparent;
-  }
-  .leaderboard-row .bar{
-    position:absolute;left:0;top:0;bottom:0;
-    background:linear-gradient(90deg, rgba(255,210,63,0.4), transparent);
-    z-index:0;
-  }
-  .leaderboard-row.me{background:rgba(255,210,63,0.2);border-color:var(--line);}
-  .rank{width:26px;text-align:center;font-weight:800;color:var(--green-dark);z-index:1;font-size:0.95rem;}
-  .lb-name{flex:1;z-index:1;font-weight:600;}
-  .lb-worth{font-family:var(--pixel-font);font-weight:400;color:var(--orange-dark);z-index:1;font-size:0.78rem;}
-
-  .stall-grid{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-    gap:30px 16px;
-  }
-  .market-shop-count{font-size:0.78rem;font-weight:600;color:var(--wood-dark);}
-  .market-more-box{text-align:center;margin-top:16px;}
-  .btn-market-more{
-    background:#fff;border:2px solid var(--line);color:var(--ink);
-    padding:10px 20px;border-radius:20px;font-size:0.85rem;box-shadow:0 4px 0 rgba(0,0,0,0.2);
-  }
-  .btn-market-more:hover{background:rgba(255,210,63,0.18);}
-  .btn-market-more:active{transform:translateY(4px);box-shadow:none;}
-
-  .truck{
-    position:relative;
-    padding-top:4px;
-    filter:drop-shadow(4px 6px 0 rgba(0,0,0,0.16));
-  }
-
-  /* หลังคาผ้าใบลายทาง แบบแผงขายของ */
-  .truck-header{
-    position:relative;
-    display:flex;align-items:center;gap:8px;
-    background:repeating-linear-gradient(
-      100deg,
-      var(--truck-a) 0px, var(--truck-a) 16px,
-      rgba(255,255,255,0.92) 16px, rgba(255,255,255,0.92) 28px
-    );
-    border-radius:14px 14px 0 0;
-    padding:9px 11px 12px;
-    border:3px solid var(--line);
-    border-bottom:none;
-  }
-  /* ขอบหลังคาหยักเป็นลอน */
-  .truck-header::after{
-    content:'';
-    position:absolute; left:0; right:0; bottom:-8px; height:16px;
-    background-image: radial-gradient(circle at 9px 0, transparent 8px, var(--truck-a) 9px);
-    background-size:18px 16px;
-    background-repeat:repeat-x;
-    filter:brightness(0.92);
-  }
-  .truck-emoji-badge{
-    width:34px;height:34px;border-radius:50%;
-    background:#fff;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.15rem;border:2px solid var(--line);
-    flex-shrink:0;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.25);
-  }
-  .truck-name{font-weight:800;font-size:0.85rem;line-height:1.15;color:#1c1c1c;}
-  .truck-tag{font-size:0.68rem;color:rgba(44,28,13,0.65);}
-  /* สร้างกล่องป้ายชื่อร้านสีขาว ทับบนลายหลังคา */
-  .truck-header > div:not(.truck-emoji-badge) {
-    background: #ffffff;
-    padding: 4px 8px;
-    border-radius: 8px;
-    border: 2px solid var(--line);
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.15);
-  }
-  .truck-tagline{
-    position:relative;z-index:1;
-    font-size:0.72rem;font-style:italic;color:var(--green-dark);font-weight:600;
-    background:#fff;border-left:3px solid var(--line);border-right:3px solid var(--line);
-    padding:9px 10px 5px;text-align:center;
-  }
-
-  /* ชั้นวางของ + แผงหน้าร้าน */
-  .truck-window{
-    position:relative;z-index:1;
-    background: var(--truck-b);
-    border:3px solid var(--line);
-    border-top:none;
-    padding:14px 10px 10px;
-  }
-  /* จัดระเบียบกล่องสินค้าใหม่ให้กว้างขึ้นและไม่อึดอัด */
-  .truck-goods{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(115px,1fr)); /* ขยายความกว้างขั้นต่ำของกล่อง */
-    gap:12px; /* เพิ่มระยะห่างระหว่างกล่องแต่ละใบ */
-  }
-  .truck-good{
-    background:#fff;border-radius:10px;
-    padding:12px 10px; /* เพิ่มพื้นที่ว่างด้านใน (Padding) บนล่าง ซ้ายขวา */
-    font-size:0.85rem;border:2px solid var(--line);
-    display:flex;flex-direction:column;align-items:center;text-align:center;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.15);
-    justify-content:space-between; /* ดันเนื้อหาให้กระจายตัวเต็มความสูงของกล่อง */
-  }
-  .truck-good-top{
-    display:flex;flex-direction:column;align-items:center;
-    gap:4px; /* ลดระยะห่างส่วนบนให้กระชับขึ้นเล็กน้อย */
-    margin-bottom:8px;
-    width: 100%;
-    flex: 1; /* ให้ส่วนนี้ช่วยกระจายพื้นที่ ทำให้ทุกกล่องสูงเท่ากัน */
-  }
+    // 💎 หมวดของแรร์ / ของประมูล (ราคาสูง ความผันผวนสูงปรี๊ด ไว้เก็งกำไร!)
+    ['กล่องสุ่มอาร์ตทอย', 350, 0.6, '🎁'],
+    ['การ์ดทองหายาก', 500, 0.7, '🎫'],
+    ['โมเดลลิมิเต็ด', 890, 0.5, '🤖'],
+    ['เครื่องเกมพกพา', 1200, 0.4, '🎮'],
+    ['สเก็ตบอร์ด', 750, 0.4, '🛹'],
+    ['รองเท้าผ้าใบฮิต', 999, 0.5, '👟'],
+    ['มงกุฎเพชร', 2500, 0.8, '👑']
+  ];
   
-  /* เพิ่มโค้ดส่วนนี้เพื่อจัดระเบียบกล่องราคาในตลาดกลางโดยเฉพาะ */
-  .truck-good .price-tag {
-    width: 100%; /* ขยายกล่องราคาให้กว้าง 100% พอดีกับชุดปุ่มด้านล่าง */
-    margin-top: auto; /* ดันกล่องราคาลงมาให้อยู่ระดับเดียวกันเสมอ แม้ชื่อสินค้าจะยาวไม่เท่ากัน */
-    box-sizing: border-box;
-  }
-  .truck-good-emoji{
-    font-size:2rem;line-height:1;
-    background:var(--cream-2);border:2px solid var(--line);border-radius:8px;
-    padding:8px;margin-bottom:2px;
-  }
-  .truck-good-name{font-size:0.8rem;font-weight:700;line-height:1.2;}
-  .truck-good-price{margin-top:2px;}
-  .truck-good-controls{
-    display:flex;gap:6px;align-items:center;justify-content:center;width:100%;
-  }
-  .truck-good-controls .qty-input{
-    width:44px;padding:6px 4px;text-align:center; /* ขยายช่องกรอกตัวเลขเล็กน้อย */
-  }
-  .truck-good-controls .btn{
-    padding:7px 10px;font-size:0.75rem;
-    flex: 1; /* บังคับให้ปุ่มซื้อขยายเต็มพื้นที่ที่เหลือ เพื่อความสวยงาม */
-  }
-  .truck-empty-note{color:var(--wood-dark);font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
+  // โค้ดส่วนนี้จะเขียนข้อมูลทั้งหมดลงชีต
+  items.getRange(2, 1, newItems.length, 4).setValues(newItems);
 
-  /* เคาน์เตอร์ไม้ด้านล่างแผง แทนล้อรถ */
-  .truck-counter{
-    height:16px;border-radius:0 0 10px 10px;
-    background:repeating-linear-gradient(90deg, var(--wood) 0 14px, var(--wood-dark) 14px 28px);
-    border:3px solid var(--line);border-top:none;
-  }
+  const students = getOrCreateSheet(ss, SHEETS.STUDENTS);
+  students.clear();
+  students.getRange('A1:E1').setValues([['id', 'name', 'cash', 'joinedAt', 'lastSeen']]);
 
-  .shop-setup-styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:12px 0;}
-  .style-choice{
-    display:flex;flex-direction:column;align-items:center;gap:5px;
-    padding:10px 6px;border-radius:12px;cursor:pointer;
-    border:2px solid var(--line);background:#fff;
-    font-size:0.72rem;text-align:center;color:var(--wood-dark);font-weight:600;
-    transition:transform .1s;
-  }
-  .style-choice:hover{transform:translateY(-2px);}
-  .style-choice .swatch-emoji{font-size:1.5rem;}
-  .style-choice.selected{border-color:var(--orange-dark);background:rgba(255,154,60,0.18);color:var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,0.2);}
-  .shop-name-input{
-    width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);
-    background:#fff;color:var(--ink);font-size:0.95rem;margin-bottom:6px;font-family:inherit;font-weight:600;
-  }
-  .shop-name-input:focus{box-shadow:0 0 0 3px rgba(255,154,60,0.3);outline:none;}
-  .shop-summary{display:flex;align-items:center;gap:14px;}
-  .shop-summary .truck-emoji-badge{width:48px;height:48px;font-size:1.6rem;background:var(--cream-2);}
-  .shop-summary-info{flex:1;}
-  .shop-summary-name{font-weight:800;font-size:1.05rem;}
-  .shop-summary-tagline{font-size:0.8rem;color:var(--green-dark);font-style:italic;margin:2px 0;font-weight:600;}
-  .shop-summary-tag{font-size:0.78rem;color:var(--wood-dark);}
-  .btn-shop{
-    background:linear-gradient(180deg,#ffb15c,var(--orange));color:#4a2400;
-    width:100%;padding:13px;font-size:0.95rem;border-radius:12px;
-    box-shadow:0 5px 0 var(--orange-dark);
-  }
-  .btn-edit-shop{background:#fff;border:2px solid var(--line);color:var(--ink);border-radius:12px;box-shadow:0 4px 0 rgba(0,0,0,0.2);}
+  const inv = getOrCreateSheet(ss, SHEETS.INVENTORY);
+  inv.clear();
+  inv.getRange('A1:D1').setValues([['studentId', 'itemName', 'qty', 'avgCost']]);
 
-  /* ===== หน้าต่างจัดการ/ตกแต่งร้านค้า (ป๊อปอัพ) ===== */
-  .modal-overlay{
-    position:fixed;inset:0;z-index:60;display:none;
-    align-items:center;justify-content:center;padding:16px;
-    background:rgba(15,25,40,0.68);
-  }
-  .modal-overlay.show{display:flex;}
-  .modal-panel{
-    width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
-    background:var(--panel);
-    border:5px solid var(--line);border-radius:22px;padding:22px;
-    box-shadow:8px 8px 0 rgba(0,0,0,0.4);
-  }
-  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-  .modal-header h3{margin:0;font-size:1.1rem;color:var(--orange-dark);font-weight:800;}
-  .modal-close{
-    background:#fff;border:2px solid var(--line);color:var(--wood-dark);font-size:1.1rem;
-    cursor:pointer;line-height:1;padding:5px 10px;border-radius:8px;box-shadow:2px 2px 0 rgba(0,0,0,0.2);
-  }
-  .modal-close:hover{color:var(--red-dark);}
-  .modal-close:active{transform:translateY(2px);box-shadow:none;}
-  .modal-sub{font-size:0.82rem;color:var(--wood-dark);margin:6px 0 16px;font-weight:500;}
-  .modal-field-label{font-size:0.75rem;color:var(--wood-dark);margin:10px 0 4px;font-weight:700;letter-spacing:0.2px;}
+  const listings = getOrCreateSheet(ss, SHEETS.LISTINGS);
+  listings.clear();
+  listings.getRange('A1:G1').setValues([['id', 'sellerId', 'sellerName', 'itemName', 'qty', 'price', 'createdAt']]);
 
-  .empty{
-    color:var(--wood-dark);font-size:0.85rem;padding:14px 10px;text-align:center;
-    border:2px dashed var(--line-soft);border-radius:12px;font-weight:500;
-  }
-  .toast{
-    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
-    background:var(--navy);border:3px solid var(--line);color:#fff;
-    padding:11px 22px;border-radius:14px;font-size:0.9rem;opacity:0;transition:opacity .3s;
-    z-index:50;font-weight:700;box-shadow:4px 4px 0 rgba(0,0,0,0.3);
-  }
-  .toast.show{opacity:1;}
-  .gameover{
-    max-width:440px;margin:10vh auto;text-align:center;padding:32px;
-    background:var(--panel);
-    border:5px solid var(--line);border-radius:20px;
-    box-shadow:8px 8px 0 rgba(0,0,0,0.3);
-  }
-  .gameover h2{color:var(--orange-dark);font-size:1.4rem;margin-top:0;}
-  .gameover p{color:var(--wood-dark);}
-  /* ===== สไตล์หน้าต่างเกม (อ้างอิงจาก cover-banner_2.webp) ===== */
-  .game-window {
-    border: 4px solid #2b3658; /* เส้นขอบสีน้ำเงินเข้ม */
-    border-radius: 12px;
-    overflow: hidden; /* ไม่ให้ส่วนหัวล้นกรอบ */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  }
+  const tx = getOrCreateSheet(ss, SHEETS.TRANSACTIONS);
+  tx.clear();
+  tx.getRange('A1:H1').setValues([['id', 'time', 'buyerId', 'buyerName', 'sellerId', 'sellerName', 'itemName', 'qtyPriceTotal']]);
 
-  /* ส่วนหัวของกล่อง (Header) */
-  .window-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 16px;
-    border-bottom: 4px solid #2b3658;
-    font-weight: bold;
-    color: #1a1a1a;
-  }
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.1rem;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  /* กล่องแสดงเหรียญทอง */
-  .coin-box {
-    background-color: rgba(0, 0, 0, 0.15);
-    padding: 4px 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
-    color: #333;
-  }
-
-  /* ปุ่มกากบาทปิดหน้าต่าง */
-  .close-btn {
-    background-color: #e75a50; /* สีแดง */
-    color: white;
-    border: 2px solid #2b3658;
-    border-radius: 6px;
-    width: 28px;
-    height: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  /* พื้นที่เนื้อหาด้านใน */
-  .window-body {
-    padding: 16px;
-    min-height: 500px;
-  }
-
-  /* --- ธีมสีส้ม (หน้าขายของ) --- */
-  .window-orange .window-header { background-color: #f69c76; } /* สีส้มหัวกล่อง */
-  .window-orange .window-body { background-color: #faeed4; } /* สีครีมเนื้อหา */
-
-  /* --- ธีมสีฟ้า (หน้าซื้อของ) --- */
-  .window-blue .window-header { background-color: #7abdf4; } /* สีฟ้าหัวกล่อง */
-  .window-blue .window-body { background-color: #e5f0fa; } /* สีฟ้าอ่อนเนื้อหา */
-  .window-green .window-header { background-color: #8ce09e; } /* สีเขียวหัวกล่อง */
-  .window-green .window-body { background-color: #e6f9eb; } /* สีเขียวอ่อนเนื้อหา */
-  /* ปรับปุ่มและป้ายกำกับทั้งหมดให้เป็นสี่เหลี่ยมขอบมนมาตรฐานเดียวกัน */
-  .btn, button, #login button, .teacher-access, .btn-market-more,
-  .btn-shop, .btn-edit-shop, .btn-logout, .modal-close,
-  .pill, .cash, .timer, .badge {
-    border-radius: 10px !important;
-  }
-  /* จำกัดความสูงของรายการสินค้าซัพพลายเออร์ และเพิ่มแถบเลื่อน */
-  #supplierList {
-    max-height: 55vh; /* จำกัดความสูงไม่เกิน 55% ของหน้าจอ */
-    overflow-y: auto; /* ให้มีแถบเลื่อนแนวตั้งเมื่อเนื้อหายาวเกิน */
-    padding-right: 6px; /* เว้นระยะขวาไม่ให้เนื้อหาชิดแถบเลื่อนเกินไป */
-  }
-
-  /* ตกแต่งแถบเลื่อน (Scrollbar) ให้สวยงามเข้ากับธีมเกม */
-  #supplierList::-webkit-scrollbar {
-    width: 6px;
-  }
-  #supplierList::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.05); 
-    border-radius: 10px;
-  }
-  #supplierList::-webkit-scrollbar-thumb {
-    background: #7abdf4; /* ใช้สีฟ้าให้เข้ากับธีมกล่อง */
-    border-radius: 10px;
-  }
-  /* บังคับให้หน้าต่างทั้ง 3 คอลัมน์ยืดความสูงเท่ากันเสมอ */
-  .grid {
-    align-items: stretch !important;
-  }
-  
-  /* ทำให้ตัวกล่องรองรับการยืดขยาย */
-  .game-window {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  /* ดันพื้นที่เนื้อหาและพื้นหลังให้เต็มความสูงที่เหลือ */
-  .window-body {
-    flex: 1 !important;
-  }
-  /* จัดระเบียบไอคอน SVG ให้ตรงกับข้อความ */
-  .icon-svg {
-    width: 24px;
-    height: 24px;
-    vertical-align: text-bottom;
-    margin-right: 8px;
-    display: inline-block;
-  }
-</style>
-</head>
-<body>
-
-<div class="cover-banner">
-  <img src="https://i.postimg.cc/tgwthzMh/Chat-GPT-Image-Jul-27-2026-05-32-48-PM-(1).png" alt="เกมขายของออนไลน์ - ตลาดนัดนักเรียน" loading="eager" decoding="async">
-</div>
-
-<div class="lightstring"></div>
-
-<button type="button" class="teacher-access" onclick="goTeacher()">👩‍🏫 สำหรับคุณครู</button>
-
-<div id="login">
-  <h2>🛒 ตลาดนัดนักเรียน</h2>
-  <p class="sub">🧱 ซื้อมาขายไป เปิดร้านรถขายของของตัวเอง แล้วไปวัดกันที่กระดานผู้นำ!</p>
-  <input id="nameInput" placeholder="ชื่อของเธอ" maxlength="20">
-  <input id="codeInput" placeholder="รหัสห้อง (ครูให้)" maxlength="20">
-  <button onclick="doJoin()">▶ เข้าตลาด</button>
-  <div class="msg" id="loginMsg"></div>
-</div>
-
-<div id="app">
-<div class="topbar" style="display:none" id="topbar">
-  <h1><span id="myAvatarLabel">🏮</span> <span id="gameNameLabel">ตลาดนัดนักเรียน</span></h1>
-  <div class="stats">
-    <div class="timer" id="timerBox">⏳ --:--</div>
-    <div class="cash">💰 <span id="cashLabel">0</span></div>
-  </div>
-</div>
-
-<main id="main">
-
-<div id="gameOverBox" class="gameover" style="display:none">
-  <h2>🏁 จบเกมแล้ว!</h2>
-  <p>ดูอันดับสุดท้ายของทุกคนได้ด้านล่าง</p>
-</div>
-
-<div class="grid">
-  <!-- ส่วนที่ 1: โซนซ้าย ธีมสีส้ม (หน้าขายของ) -->
-  <div class="game-window window-orange">
-    <div class="window-header">
-      <div class="header-left"><span>🏪</span> หน้าขายของ</div>
-      <div class="header-right">
-        <div class="coin-box">🪙 <span id="windowCash1">0</span></div>
-      </div>
-    </div>
-    <div class="window-body">
-      <div class="card">
-        <h3>🚚 รถขายของของฉัน</h3>
-        <div id="shopBox"></div>
-      </div>
-      <div class="card">
-        <h3>🎒 สต๊อกของฉัน</h3>
-        <div id="myInventory"></div>
-      </div>
-      <div class="card">
-        <h3>🏷️ ของที่ฉันวางขายอยู่</h3>
-        <div id="myListings"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 2: โซนกลาง ธีมสีฟ้า (หน้าซื้อของจากระบบ) -->
-  <div class="game-window window-blue">
-    <div class="window-header">
-      <div class="header-left"><span>🏭</span> ซื้อจากส่วนกลาง</div>
-      <div class="header-right">
-        <div class="coin-box">🪙 <span id="windowCash2">0</span></div>
-      </div>
-    </div>
-    <div class="window-body">
-      <div class="card">
-        <h3>🏭 ซื้อจากซัพพลายเออร์กลาง</h3>
-        <div id="supplierList"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ส่วนที่ 3: โซนขวา ธีมสีเขียว (ตลาดกลาง) -->
-  <div class="game-window window-green">
-    <div class="window-header">
-      <div class="header-left"><span>🛒</span> ตลาดกลาง</div>
-      <div class="header-right">
-        <div class="coin-box">🪙 <span id="windowCash3">0</span></div>
-      </div>
-    </div>
-    <div class="window-body">
-      <div class="card">
-        <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount"></span></h3>
-        
-        <!-- ช่องค้นหา ต้องอยู่ตรงนี้ครับ (นอกกล่อง marketList) -->
-        <div style="margin-bottom: 14px;">
-          <input type="text" id="marketSearchInput" class="shop-name-input" placeholder="🔍 ค้นหาชื่อร้าน หรือ ชื่อสินค้า..." oninput="handleMarketSearch()" style="border-radius: 10px; width: 100%;">
-        </div>
-        
-        <div id="marketList" class="stall-grid"></div>
-        <div id="marketMoreBtnBox"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</main>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<div class="modal-overlay" id="shopModalOverlay">
-  <div class="modal-panel">
-    <div class="modal-header">
-      <h3 id="shopModalTitle">🚚 เปิดร้านค้า</h3>
-      <button class="modal-close" onclick="closeShopModal()">✕</button>
-    </div>
-    <p class="modal-sub" id="shopModalIntro"></p>
-
-    <div class="modal-field-label">ชื่อร้าน</div>
-    <input class="shop-name-input" id="shopModalNameInput" maxlength="24" placeholder="เช่น มะม่วงพี่หนึ่ง">
-
-    <div class="modal-field-label">คำโปรยร้าน (ไม่บังคับ)</div>
-    <input class="shop-name-input" id="shopModalTaglineInput" maxlength="40" placeholder="เช่น สดใหม่ทุกวัน ราคาเป็นกันเอง">
-
-    <div class="modal-field-label">ธีมรถขายของ</div>
-    <div class="shop-setup-styles" id="shopModalStyles"></div>
-
-    <button class="btn btn-shop" id="shopModalSubmitBtn" onclick="submitShopModal()"></button>
-  </div>
-</div>
-
-<script>
-// ==========================================================
-// ตั้งค่า URL ของ Google Apps Script Web App ที่ deploy แล้ว
-// ==========================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbwCQ34YaLFyu1almvgGEU1sojdCFj_IZs_hJ2WckOcmRgBB48i2HW-d_zPNpyjyJg95/exec";
-
-let studentId = localStorage.getItem('marketStudentId') || null;
-let pollTimer = null;
-let latestSupplier = [];
-
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
+  const shops = getOrCreateSheet(ss, SHEETS.SHOPS);
+  shops.clear();
+  shops.getRange('A1:F1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt', 'tagline']]);
 }
 
-async function api(action, payload){
-  // กันหน้าเว็บ "ค้าง" ถ้าเซิร์ฟเวอร์ไม่ตอบกลับเลย (เช่น Apps Script ช้าตอนมีคนเล่นพร้อมกันเยอะ)
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action, ...payload }),
-      signal: controller.signal
-    });
-    let data;
-    try {
-      data = await res.json();
-    } catch (parseErr) {
-      // เซิร์ฟเวอร์ตอบกลับมาไม่ใช่ JSON (เช่น หน้า error ของ Google) — อย่าปล่อยให้ throw ค้าง
-      // networkError:true ใช้แยกจาก error จริงของเกม (เช่น "ไม่พบผู้เล่น") กันไม่ให้ fetchState() เข้าใจผิดว่า session หมดอายุแล้วเตะออกจากเกม
-      return { error: 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', networkError: true };
-    }
-    return data;
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      return { error: 'เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่อีกครั้ง', networkError: true };
-    }
-    return { error: 'การเชื่อมต่อขัดข้อง กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่', networkError: true };
-  } finally {
-    clearTimeout(timeoutId);
+function setup() {
+  setupCore();
+  SpreadsheetApp.getUi().alert('ติดตั้งเสร็จแล้ว! ไปที่ Deploy > New deployment เพื่อสร้าง Web App URL');
+}
+
+function getOrCreateSheet(ss, name) {
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  return sh;
+}
+
+// เมนูช่วยครูคุมเกมจากหน้า Google Sheet โดยตรง
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('เกมตลาดนัด')
+    .addItem('เริ่มเกม', 'startGame')
+    .addItem('จบเกม', 'endGame')
+    .addItem('รีเซ็ตเกมทั้งหมด (ล้างข้อมูล)', 'setup')
+    .addToUi();
+}
+
+function startGameCore() {
+  setConfig('GAME_STARTED_AT', new Date().toISOString());
+  setConfig('GAME_ENDED', 'FALSE');
+}
+
+function endGameCore() {
+  setConfig('GAME_ENDED', 'TRUE');
+}
+
+function startGame() {
+  startGameCore();
+  SpreadsheetApp.getUi().alert('เริ่มเกมแล้ว!');
+}
+
+function endGame() {
+  endGameCore();
+  SpreadsheetApp.getUi().alert('จบเกมแล้ว!');
+}
+
+// ---------- CONFIG HELPERS ----------
+function getConfigMap() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEETS.CONFIG);
+  const values = sh.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < values.length; i++) {
+    map[values[i][0]] = values[i][1];
   }
+  return map;
 }
 
-async function goTeacher(){
-  const key = prompt('กรอกรหัสครู (Teacher Key) เพื่อเข้าสู่แดชบอร์ดคุณครู');
-  if(key === null) return; // กดยกเลิก
-  const trimmed = key.trim();
-  if(!trimmed){ showToast('กรุณากรอกรหัสครู'); return; }
-  showToast('กำลังตรวจสอบรหัส...');
-  const r = await api('teacherState', { key: trimmed });
-  if(r.error){ showToast('รหัสไม่ถูกต้อง'); return; }
-  sessionStorage.setItem('marketTeacherKey', trimmed);
-  window.location.href = 'teacher.html';
-}
-
-async function doJoin(){
-  const name = document.getElementById('nameInput').value.trim();
-  const code = document.getElementById('codeInput').value.trim();
-  const msg = document.getElementById('loginMsg');
-  if(!name || !code){ msg.textContent = 'กรอกชื่อและรหัสห้องให้ครบ'; return; }
-  msg.textContent = 'กำลังเข้าตลาด...';
-  const r = await api('join', { name, code });
-  if(r.error){ msg.textContent = r.error; return; }
-  studentId = r.studentId;
-  localStorage.setItem('marketStudentId', studentId);
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('main').classList.add('show');
-  document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
-  startPolling();
-}
-
-function startPolling(){
-  fetchState();
-  pollTimer = setInterval(fetchState, 3000);
-}
-
-async function fetchState(){
-  if(!studentId) return;
-  const s = await api('state', { studentId });
-  if(s.error){
-    // เน็ตสะดุด/เซิร์ฟเวอร์ตอบช้าชั่วคราว -> แค่แจ้งเตือน ไม่ควรเตะออกจากเกม รอบ polling ถัดไปจะลองใหม่เอง
-    if (s.networkError) {
-      showToast(s.error);
+function setConfig(key, value) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEETS.CONFIG);
+  const values = sh.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] === key) {
+      sh.getRange(i + 1, 2).setValue(value);
       return;
     }
-    // error จริงจากเซิร์ฟเวอร์ (เช่น "ไม่พบผู้เล่น กรุณาเข้าเกมใหม่") ถึงจะเตะออกจากเกม
-    showToast(s.error);
-    localStorage.removeItem('marketStudentId');
-    clearInterval(pollTimer);
-    document.getElementById('login').style.display='block';
-    document.getElementById('topbar').style.display='none';
-    document.getElementById('main').classList.remove('show');
-    document.querySelector('.teacher-access').style.display = '';
-    return;
   }
-  render(s);
+  sh.appendRow([key, value]);
 }
 
-function fmtTime(sec){
-  if(sec === null) return '⏳ รอครูเริ่มเกม';
-  const m = Math.floor(sec/60), s = sec%60;
-  return `⏳ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
+// action ที่แค่ "อ่าน" ข้อมูล ไม่ได้แก้ไขอะไร ไม่จำเป็นต้องใช้ Lock เลย
+// (สำคัญมาก: หน้าเว็บนักเรียนแต่ละคน poll 'state' ทุก 3 วิ ถ้าบังคับให้ทุกคนต้องแย่ง
+//  Lock เดียวกันแม้แต่ตอนแค่อ่านข้อมูล คิวจะยาวมากเมื่อมีคนเล่นพร้อมกันหลายคน
+//  จนทำให้ action อื่น เช่น ซื้อ/ขาย/เปิดร้าน ต้องรอนานเกินจน Lock timeout)
+const READ_ONLY_ACTIONS = ['state', 'teacherState', 'teacherGetConfig'];
 
-function render(s){
-  document.getElementById('gameNameLabel').textContent = s.gameName;
-  document.getElementById('myAvatarLabel').textContent = vendorEmoji(s.student.name);
-  document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
-  document.getElementById('windowCash1').textContent = Math.round(s.student.cash).toLocaleString();
-  document.getElementById('windowCash2').textContent = Math.round(s.student.cash).toLocaleString();
-  document.getElementById('windowCash3').textContent = Math.round(s.student.cash).toLocaleString();
-  const timerBox = document.getElementById('timerBox');
-  timerBox.textContent = fmtTime(s.timeLeftSeconds);
-  timerBox.classList.toggle('low', s.timeLeftSeconds !== null && s.timeLeftSeconds < 60);
-
-  document.getElementById('gameOverBox').style.display = s.gameEnded ? 'block' : 'none';
-
-  latestSupplier = s.supplierItems;
-  truckStyles = s.truckStyles || truckStyles;
-  truckCost = s.truckCost || 0;
-  myShop = s.myShop || myShop;
-  renderSupplier(s.supplierItems);
-  renderShop(s.myShop, s.truckCost, s.truckStyles);
-  renderMarket(s.market, s.gameEnded);
-  renderInventory(s.inventory, s.gameEnded, s.myShop && s.myShop.opened);
-  renderMyListings(s.myListings, s.gameEnded);
-  renderLeaderboard(s.leaderboard, s.student.name);
-}
-
-let truckStyles = [];
-let truckCost = 0;
-let myShop = { opened: false, name: '', styleId: null, tagline: '' };
-let shopModalStyleId = null; // สไตล์ที่เลือกไว้ชั่วคราวในหน้าต่างจัดการร้าน
-
-function styleById(id){ return truckStyles.find(t => t.id === id) || truckStyles[0] || {id:'red',label:'',emoji:'🚚',colorA:'#d1453a',colorB:'#f7ded9'}; }
-
-function escapeAttr(str){
-  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-}
-
-// การ์ดสรุปในแถบข้าง เป็นแค่ทางเข้าไปหน้าต่างจัดการร้าน (ป๊อปอัพ) — ไม่มีฟอร์มฝังอยู่ในนี้แล้ว
-function renderShop(shop, cost, styles){
-  const el = document.getElementById('shopBox');
-  if(!shop) return;
-
-  if(shop.opened){
-    const st = styleById(shop.styleId);
-    el.innerHTML = `
-      <div class="shop-summary">
-        <div class="truck-emoji-badge">${st.emoji}</div>
-        <div class="shop-summary-info">
-          <div class="shop-summary-name">${shop.name}</div>
-          ${shop.tagline ? `<div class="shop-summary-tagline">“${shop.tagline}”</div>` : ''}
-          <div class="shop-summary-tag">ธีม: ${st.label}</div>
-        </div>
-      </div>
-      <button class="btn btn-edit-shop" style="margin-top:10px;width:100%" onclick="openShopModal()">🎨 จัดการ/ตกแต่งร้านค้า</button>
-    `;
-  } else {
-    el.innerHTML = `
-      <p style="font-size:0.82rem;color:var(--paper-dim);margin:0 0 10px">ยังไม่มีรถขายของ — ต้องเปิดร้านก่อน ถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>
-      <button class="btn btn-shop" style="width:100%" onclick="openShopModal()">🚚 เปิดร้านค้า</button>
-    `;
-  }
-}
-
-// ---------- หน้าต่างจัดการ/ตกแต่งร้านค้า (ป๊อปอัพ) ----------
-function openShopModal(){
-  shopModalStyleId = myShop.opened ? myShop.styleId : ((truckStyles[0] && truckStyles[0].id) || 'red');
-
-  document.getElementById('shopModalTitle').textContent = myShop.opened ? '🎨 จัดการ/ตกแต่งร้านค้า' : '🚚 เปิดร้านค้า';
-  document.getElementById('shopModalIntro').textContent = myShop.opened
-    ? 'แก้ไขชื่อร้าน คำโปรยร้าน และธีมรถขายของได้ฟรี'
-    : `ต้องมีรถขายของก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${truckCost} บ.)`;
-  document.getElementById('shopModalNameInput').value = myShop.opened ? (myShop.name || '') : '';
-  document.getElementById('shopModalTaglineInput').value = myShop.opened ? (myShop.tagline || '') : '';
-  document.getElementById('shopModalSubmitBtn').textContent = myShop.opened ? '💾 บันทึกการแก้ไข' : `🚚 เปิดร้าน (เสียเงิน ${truckCost} บ.)`;
-
-  renderShopModalStyles();
-  document.getElementById('shopModalOverlay').classList.add('show');
-}
-
-function closeShopModal(){
-  document.getElementById('shopModalOverlay').classList.remove('show');
-}
-
-function renderShopModalStyles(){
-  const el = document.getElementById('shopModalStyles');
-  el.innerHTML = truckStyles.map(st => `
-    <div class="style-choice ${st.id===shopModalStyleId?'selected':''}" onclick="selectModalStyle('${st.id}')">
-      <div class="swatch-emoji">${st.emoji}</div>
-      <div>${st.label}</div>
-    </div>
-  `).join('');
-}
-
-function selectModalStyle(id){
-  shopModalStyleId = id;
-  renderShopModalStyles();
-}
-
-async function submitShopModal(){
-  const shopName = document.getElementById('shopModalNameInput').value.trim();
-  const tagline = document.getElementById('shopModalTaglineInput').value.trim();
-  if(!shopName){ showToast('ตั้งชื่อร้านก่อนนะ'); return; }
-
-  const btn = document.getElementById('shopModalSubmitBtn');
-  const originalLabel = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = myShop.opened ? 'กำลังบันทึก...' : 'กำลังเปิดร้าน...';
-  showToast(myShop.opened ? 'กำลังบันทึกร้านค้า...' : 'กำลังเปิดร้าน...');
-
-  const action = myShop.opened ? 'updateShop' : 'openShop';
+// ---------- ENTRY POINT ----------
+function doPost(e) {
   try {
-    const r = await api(action, { studentId, shopName, tagline, styleId: shopModalStyleId });
+    const body = JSON.parse(e.postData.contents);
+    const action = body.action;
 
-    if(r.error){
-      showToast(r.error);
-      return; // finally ด้านล่างจะปลดล็อกปุ่มให้เสมอ
+    if (READ_ONLY_ACTIONS.indexOf(action) !== -1) {
+      return jsonResponse(runAction(action, body));
     }
 
-    showToast(myShop.opened ? 'บันทึกร้านค้าแล้ว' : 'เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
-    // การเปิด/แก้ไขร้านสำเร็จแล้วฝั่งเซิร์ฟเวอร์ ณ จุดนี้
-    // ถ้า fetchState() ถัดไปมีปัญหา (เน็ตสะดุด ฯลฯ) ก็ไม่ควรทำให้ modal ค้าง จึงครอบด้วย try/catch แยก
+    // action ที่เหลือ = เขียน/แก้ไขข้อมูล ต้องกันชนกันด้วย Lock
+    const lock = LockService.getScriptLock();
+    let gotLock = false;
     try {
-      await fetchState();
-    } catch (stateErr) {
-      // ไม่เป็นไร ข้อมูลจะถูกดึงใหม่รอบ polling ถัดไปอยู่แล้ว
+      // สำคัญ: waitLock ต้องอยู่ใน try ด้วย ไม่งั้นถ้าแย่งล็อกไม่ได้
+      // มันจะ throw ออกไปนอก try/catch ทำให้ Apps Script ตอบกลับเป็นหน้า error (ไม่ใช่ JSON)
+      // ฝั่งหน้าเว็บจะ parse JSON ไม่ได้ แล้วค้างตลอดไป (ปุ่มไม่ถูกปลดล็อก)
+      lock.waitLock(20000);
+      gotLock = true;
+      return jsonResponse(runAction(action, body));
+    } finally {
+      if (gotLock) lock.releaseLock();
     }
-    closeShopModal();
   } catch (err) {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalLabel;
+    // ไม่ว่าจะ error จากขั้นตอนไหน (รวมถึงแย่งล็อกไม่ได้) ก็ยังส่ง JSON กลับเสมอ
+    // เพื่อให้หน้าเว็บโชว์ error แล้วปลดล็อกปุ่มได้ ไม่ค้าง
+    return jsonResponse({ error: 'เซิร์ฟเวอร์ไม่ว่าง กรุณาลองใหม่อีกครั้ง (' + String(err) + ')' });
   }
 }
 
-// ปิดป๊อปอัพเมื่อคลิกพื้นหลังมืดรอบนอกกล่อง
-document.getElementById('shopModalOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'shopModalOverlay') closeShopModal();
-});
+function runAction(action, body) {
+  switch (action) {
+    case 'join': return handleJoin(body);
+    case 'state': return handleState(body);
+    case 'teacherState': return handleTeacherState(body);
+    case 'teacherStart': return handleTeacherStart(body);
+    case 'teacherEnd': return handleTeacherEnd(body);
+    case 'teacherReset': return handleTeacherReset(body);
+    case 'teacherGetConfig': return handleTeacherGetConfig(body);
+    case 'teacherUpdateConfig': return handleTeacherUpdateConfig(body);
+    case 'buyFromSupplier': return handleBuyFromSupplier(body);
+    case 'openShop': return handleOpenShop(body);
+    case 'updateShop': return handleUpdateShop(body);
+    case 'listForSale': return handleListForSale(body);
+    case 'cancelListing': return handleCancelListing(body);
+    case 'buyListing': return handleBuyListing(body);
+    
+    // ---------------- เพิ่ม 3 บรรทัดนี้ ----------------
+    case 'bidAuction': return handleBidAuction(body);
+    case 'teacherStartAuction': return handleTeacherStartAuction(body);
+    case 'teacherEndAuction': return handleTeacherEndAuction(body);
+    // ------------------------------------------------
 
-
-let itemEmojiMap = {};
-function itemEmoji(name){ return itemEmojiMap[name] || '📦'; }
-
-// เซตอินเนอร์ HTML ใหม่ โดยไม่ทำให้ตัวเลขที่ผู้เล่นพิมพ์ค้างอยู่ในช่อง input หายไป
-// (ปัญหาเดิม: renderState ทำงานทุก 3 วิ แล้วเขียนทับ input ทั้งหมดด้วยค่าเริ่มต้น)
-function setHtmlPreserveInputs(el, html){
-  const inputs = el.querySelectorAll('input[id]');
-  const saved = {};
-  inputs.forEach(inp => {
-    saved[inp.id] = { value: inp.value, focused: document.activeElement === inp };
-  });
-  el.innerHTML = html;
-  Object.keys(saved).forEach(id => {
-    const ni = document.getElementById(id);
-    if(!ni) return;
-    ni.value = saved[id].value;
-    if(saved[id].focused) ni.focus();
-  });
+    default: return { error: 'ไม่รู้จัก action: ' + action };
+  }
 }
 
-let mySupplierItemNames = null; // ตัวแปรสำหรับจำรายการสินค้า 8 ชิ้นของแต่ละคน
-
-function renderSupplier(items){
-  items.forEach(it => itemEmojiMap[it.itemName] = it.emoji || '📦');
-  const el = document.getElementById('supplierList');
-
-  // 1. ถ้ายังไม่เคยสุ่ม ให้สุ่มสินค้า 8 ชิ้นแล้วจดจำ "ชื่อสินค้า" เอาไว้
-  if (!mySupplierItemNames && items.length > 0) {
-    const shuffled = [...items].sort(() => 0.5 - Math.random());
-    mySupplierItemNames = shuffled.slice(0, 8).map(i => i.itemName);
-  }
-
-  // 2. กรองรายการสินค้าทั้งหมด ให้เหลือแค่ 8 ชิ้นตามที่สุ่มได้
-  let displayItems = items;
-  if (mySupplierItemNames) {
-    displayItems = items.filter(i => mySupplierItemNames.includes(i.itemName));
-  }
-
-  // 3. สร้างหน้าตาสินค้า 8 ชิ้นลงในกล่อง
-  const html = displayItems.map(it => `
-    <div class="item-row">
-      <div class="emoji">${it.emoji||'📦'}</div>
-      <div class="item-name">${it.itemName}</div>
-      <div class="item-price price-tag">${it.price}</div>
-      <input class="qty-input" type="number" min="1" value="1" id="buyqty_${it.itemName}">
-      <button class="btn btn-buy" onclick="buySupplier('${it.itemName}', this)">ซื้อ</button>
-    </div>
-  `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
-  
-  setHtmlPreserveInputs(el, html);
+function doGet(e) {
+  return jsonResponse({ ok: true, message: 'Student Market Flip API ทำงานอยู่' });
 }
 
-// อวตาร์แม่ค้า/พ่อค้า สุ่มแบบ deterministic ตามชื่อ (คนเดิมได้อวตาร์เดิมเสมอ)
-const VENDOR_EMOJIS = ['🧕','👩‍🌾','👨‍🌾','🧑‍🍳','👩‍🍳','👨‍🍳','🧔','👵','👴','🙋‍♀️','🙋‍♂️','👩‍🦱','👨‍🦱','🧑‍🦳','👩‍🦳'];
-const AWNING_PALETTES = [
-  ['#d1453a','#f4ecd8'], ['#2f8f6f','#f4ecd8'], ['#c94f8a','#f4ecd8'],
-  ['#3f6fbf','#f4ecd8'], ['#c98a2c','#f4ecd8'], ['#7f5aa2','#f4ecd8'],
-  ['#2c8f8f','#f4ecd8'], ['#b25a3c','#f4ecd8']
-];
-function hashStr(str){
-  let h = 0;
-  for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) >>> 0;
-  return h;
-}
-function vendorEmoji(name){ return VENDOR_EMOJIS[hashStr(name) % VENDOR_EMOJIS.length]; }
-function vendorPalette(name){ return AWNING_PALETTES[hashStr(name) % AWNING_PALETTES.length]; }
-
-const MARKET_PAGE_SIZE = 6;
-let marketExpanded = false;
-let lastMarketShops = null;
-let lastMarketEnded = false;
-
-function renderMarket(listings, ended){
-  const el = document.getElementById('marketList');
-  lastMarketEnded = ended;
-
-  if(!listings.length){
-    el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>';
-    lastMarketShops = null;
-    document.getElementById('marketShopCount').textContent = '';
-    document.getElementById('marketMoreBtnBox').innerHTML = '';
-    return;
-  }
-
-  // จัดกลุ่มของตามคนขาย ให้แต่ละคนมีรถขายของเป็นของตัวเอง
-  const bySeller = {};
-  listings.forEach(l => {
-    const key = l.sellerId || l.sellerName;
-    if(!bySeller[key]) bySeller[key] = { sellerName: l.sellerName, shopName: l.shopName, styleId: l.styleId, shopTagline: l.shopTagline, goods: [] };
-    bySeller[key].goods.push(l);
-  });
-
-  lastMarketShops = Object.values(bySeller);
-  document.getElementById('marketShopCount').textContent = `· ${lastMarketShops.length} ร้าน`;
-  renderMarketGrid();
+function jsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-let marketSearchQuery = '';
-
-function handleMarketSearch() {
-  const inputEl = document.getElementById('marketSearchInput');
-  if (!inputEl) return;
-  marketSearchQuery = inputEl.value.trim().toLowerCase();
-  renderMarketGrid();
+// ---------- SHEET UTILS ----------
+function sheet(name) {
+  return SpreadsheetApp.getActive().getSheetByName(name);
 }
 
-function renderMarketGrid(){
-  const el = document.getElementById('marketList');
-  const btnBox = document.getElementById('marketMoreBtnBox');
-  if(!lastMarketShops){ return; }
-
-  // 1. ระบบกรองคำค้นหา (ดักจับ Error กรณีไม่มีข้อมูล)
-  let filteredShops = lastMarketShops;
-  if (marketSearchQuery) {
-    filteredShops = lastMarketShops.map(shop => {
-      const sName = shop.sellerName || '';
-      const shName = shop.shopName || ('แผง' + sName);
-      const displayName = shName.toLowerCase();
-      
-      const matchShopName = displayName.includes(marketSearchQuery);
-      const matchedGoods = (shop.goods || []).filter(g => (g.itemName || '').toLowerCase().includes(marketSearchQuery));
-      
-      if (matchShopName) {
-        return shop; 
-      } else if (matchedGoods.length > 0) {
-        return { ...shop, goods: matchedGoods }; 
-      }
-      return null;
-    }).filter(shop => shop !== null);
+function rowsToObjects(sh) {
+  const values = sh.getDataRange().getValues();
+  const headers = values[0];
+  const out = [];
+  for (let i = 1; i < values.length; i++) {
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = values[i][idx]);
+    obj._row = i + 1; // 1-indexed sheet row, for updates
+    out.push(obj);
   }
+  return out;
+}
 
-  const total = filteredShops.length;
-  const shownShops = (marketExpanded || marketSearchQuery) ? filteredShops : filteredShops.slice(0, MARKET_PAGE_SIZE);
+function genId(prefix) {
+  return prefix + '_' + Utilities.getUuid().slice(0, 8);
+}
 
-  if (total === 0) {
-    el.innerHTML = '<div class="empty">ไม่มีร้านค้าหรือสินค้าที่ค้นหา 😭</div>';
-    btnBox.innerHTML = '';
-    return;
-  }
+// ---------- SUPPLIER PRICE MODEL ----------
+// ราคาสินค้าจากส่วนกลางแกว่งขึ้นลงตามเวลาแบบ deterministic (ไม่ต้องเก็บ state)
+// ใช้ sine wave ผสม noise เบาๆ จาก hash ชื่อสินค้า เพื่อให้แต่ละสินค้าแกว่งไม่พร้อมกัน
+function computeSupplierPrice(itemName, basePrice, volatility) {
+  const now = new Date().getTime();
+  const minutesElapsed = now / 60000;
+  let seed = 0;
+  for (let i = 0; i < itemName.length; i++) seed += itemName.charCodeAt(i);
+  const phase = seed % 60;
+  const wave = Math.sin((minutesElapsed + phase) / 4);
+  const price = basePrice * (1 + volatility * wave * 0.5);
+  return Math.max(1, Math.round(price));
+}
 
-  // 2. สร้างหน้าตาร้านค้า
-  const html = shownShops.map(({sellerName, shopName, styleId, shopTagline, goods}) => {
-    const st = styleId ? styleById(styleId) : null;
-    const emoji = st ? st.emoji : vendorEmoji(sellerName);
-    const colorA = st ? st.colorA : vendorPalette(sellerName)[0];
-    const colorB = st ? st.colorB : '#ffe9c7';
-    const displayName = shopName || ('แผง' + sellerName);
+function getSupplierItems() {
+  const items = rowsToObjects(sheet(SHEETS.ITEMS));
+  return items.map(it => ({
+    itemName: it.itemName,
+    price: computeSupplierPrice(it.itemName, it.basePrice, it.volatility),
+    emoji: it.emoji
+  }));
+}
 
-    const goodsHtml = goods.map(l => `
-      <div class="truck-good">
-        <div class="truck-good-top">
-          <div class="truck-good-emoji">${itemEmoji(l.itemName)}</div>
-          <div class="truck-good-name">${l.itemName}</div>
-          <div class="truck-tag" style="color:var(--paper-dim)">เหลือ ${l.qty}</div>
-          <div class="truck-good-price price-tag">${l.price}</div>
-        </div>
-        <div class="truck-good-controls">
-          <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
-          <button class="btn btn-buy" ${lastMarketEnded?'disabled':''} onclick="buyListing('${l.id}', this)">ซื้อ</button>
-        </div>
-      </div>
-    `).join('');
-    return `
-      <div class="truck" style="--truck-a:${colorA};--truck-b:${colorB}">
-        <div class="truck-header">
-          <div class="truck-emoji-badge">${emoji}</div>
-          <div>
-            <div class="truck-name">${displayName}</div>
-            <div class="truck-tag">โดย ${sellerName} · ${goods.length} รายการ</div>
-          </div>
-        </div>
-        ${shopTagline ? `<div class="truck-tagline">“${shopTagline}”</div>` : ''}
-        <div class="truck-window">
-          <div class="truck-goods">${goodsHtml}</div>
-        </div>
-        <div class="truck-counter"></div>
-      </div>
-    `;
-  }).join('');
-  
-  setHtmlPreserveInputs(el, html);
+function getSupplierPriceMap() {
+  const map = {};
+  getSupplierItems().forEach(it => map[it.itemName] = it.price);
+  return map;
+}
 
-  // 3. จัดการปุ่ม "ดูร้านค้าทั้งหมด"
-  if(total <= MARKET_PAGE_SIZE || marketSearchQuery){
-    btnBox.innerHTML = ''; 
-  } else if(marketExpanded){
-    btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">▲ ย่อรายการ</button>`;
+// ---------- STUDENT HELPERS ----------
+function findStudent(studentId) {
+  const students = rowsToObjects(sheet(SHEETS.STUDENTS));
+  return students.find(s => s.id === studentId);
+}
+
+function updateStudentCash(studentId, newCash) {
+  const sh = sheet(SHEETS.STUDENTS);
+  const students = rowsToObjects(sh);
+  const s = students.find(st => st.id === studentId);
+  if (!s) throw new Error('ไม่พบผู้เล่น');
+  sh.getRange(s._row, 3).setValue(newCash); // column C = cash
+}
+
+function getInventory(studentId) {
+  const inv = rowsToObjects(sheet(SHEETS.INVENTORY));
+  return inv.filter(i => i.studentId === studentId && i.qty > 0);
+}
+
+function addInventory(studentId, itemName, qty, unitCost) {
+  const sh = sheet(SHEETS.INVENTORY);
+  const rows = rowsToObjects(sh);
+  const existing = rows.find(r => r.studentId === studentId && r.itemName === itemName);
+  if (existing) {
+    const newQty = existing.qty + qty;
+    const newAvgCost = ((existing.qty * existing.avgCost) + (qty * unitCost)) / newQty;
+    sh.getRange(existing._row, 3, 1, 2).setValues([[newQty, newAvgCost]]);
   } else {
-    btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">🔽 ดูร้านค้าทั้งหมด (อีก ${total - MARKET_PAGE_SIZE} ร้าน)</button>`;
+    sh.appendRow([studentId, itemName, qty, unitCost]);
   }
 }
 
-function toggleMarketExpand(){
-  marketExpanded = !marketExpanded;
-  renderMarketGrid();
+function removeInventory(studentId, itemName, qty) {
+  const sh = sheet(SHEETS.INVENTORY);
+  const rows = rowsToObjects(sh);
+  const existing = rows.find(r => r.studentId === studentId && r.itemName === itemName);
+  if (!existing || existing.qty < qty) throw new Error('สินค้าในสต๊อกไม่พอ');
+  sh.getRange(existing._row, 3).setValue(existing.qty - qty);
+  return existing.avgCost;
 }
 
-function renderInventory(inv, ended, shopOpened){
-  const el = document.getElementById('myInventory');
-  if(!inv.length){ el.innerHTML = '<div class="empty">ยังไม่มีของในสต๊อก ลองซื้อจากซัพพลายเออร์ดูสิ</div>'; return; }
-  const hint = !shopOpened ? `<div class="empty" style="margin-bottom:8px">🚚 เปิดร้านรถขายของก่อน ถึงจะวางขายในตลาดกลางได้ (ดูการ์ดด้านบน)</div>` : '';
-  const html = hint + inv.map(i => `
-    <div class="inv-item">
-      <div class="item-name">${i.itemName} x${i.qty}<br><span class="inv-cost">ต้นทุนเฉลี่ย ${i.avgCost} บ./ชิ้น</span></div>
-      <input class="qty-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
-      <input class="price-input" type="number" min="1" placeholder="ราคาขาย" id="sellprice_${i.itemName}">
-      <button class="btn btn-sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}', this)">วางขาย</button>
-    </div>
-  `).join('');
-  setHtmlPreserveInputs(el, html);
+// ---------- SHOP (รถขายของ) HELPERS ----------
+// สร้างชีต Shops อัตโนมัติถ้ายังไม่มี (กรณีอัปเดตโค้ดโดยไม่ได้รัน setup() ใหม่ เพื่อไม่ให้ข้อมูลเกมเดิมหาย)
+function ensureShopsSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(SHEETS.SHOPS);
+  if (!sh) {
+    sh = ss.insertSheet(SHEETS.SHOPS);
+    sh.getRange('A1:F1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt', 'tagline']]);
+  } else if (sh.getLastColumn() < 6) {
+    // ชีตเก่าที่ยังไม่มีคอลัมน์ tagline (สร้างก่อนอัปเดตฟีเจอร์นี้) -> เพิ่มคอลัมน์ให้อัตโนมัติ
+    sh.getRange('F1').setValue('tagline');
+  }
+  return sh;
 }
 
-function renderMyListings(listings, ended){
-  const el = document.getElementById('myListings');
-  if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีของวางขาย</div>'; return; }
-  el.innerHTML = listings.map(l => `
-    <div class="item-row">
-      <div class="item-name">${l.itemName} x${l.qty}</div>
-      <div class="price-tag">${l.price}</div>
-      <button class="btn btn-cancel" ${ended?'disabled':''} onclick="cancelListing('${l.id}', this)">ยกเลิก</button>
-    </div>
-  `).join('');
+function getTruckCost() {
+  const cfg = getConfigMap();
+  const n = Number(cfg.TRUCK_COST);
+  return (cfg.TRUCK_COST === undefined || cfg.TRUCK_COST === '' || isNaN(n)) ? 150 : n;
 }
 
-const MEDALS = ['🥇','🥈','🥉'];
-function renderLeaderboard(list, myName){
-  const el = document.getElementById('leaderboard');
-  const maxWorth = list.length ? Math.max(...list.map(p => p.netWorth), 1) : 1;
-  el.innerHTML = list.map((p, idx) => `
-    <div class="leaderboard-row ${p.name===myName?'me':''}">
-      <div class="bar" style="width:${Math.max(4, Math.round((p.netWorth / maxWorth) * 100))}%"></div>
-      <div class="rank">${MEDALS[idx] || (idx+1)}</div>
-      <div class="lb-name">${p.name}</div>
-      <div class="lb-worth">${p.netWorth.toLocaleString()} บ.</div>
-    </div>
-  `).join('');
+function getTeacherKey() {
+  const cfg = getConfigMap();
+  return (cfg.TEACHER_KEY === undefined || cfg.TEACHER_KEY === '') ? 'teacher123' : String(cfg.TEACHER_KEY);
 }
 
-async function buySupplier(itemName, btn){
-  const qty = Number(document.getElementById(`buyqty_${itemName}`).value);
-  if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
-  showToast('กำลังซื้อ...');
-  try {
-    const r = await api('buyFromSupplier', { studentId, itemName, qty });
-    if(r.error) showToast(r.error); else showToast(`ซื้อ ${itemName} x${qty} สำเร็จ`);
-    await fetchState(); // fetchState สร้าง UI ใหม่ทั้งการ์ด ปุ่มจะถูกแทนที่/ปลดล็อกอัตโนมัติ
-  } catch (err) {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = 'ซื้อ'; }
+function getShop(studentId) {
+  const shops = rowsToObjects(ensureShopsSheet());
+  return shops.find(s => s.studentId === studentId);
+}
+
+// Google Sheets จะแปลงค่า string "TRUE"/"FALSE" ที่เขียนเข้าไปให้กลายเป็นค่า Boolean จริงโดยอัตโนมัติ
+// เมื่ออ่านกลับมาผ่าน getValues() จึงอาจได้ boolean true หรือ string 'TRUE' ก็ได้ (ขึ้นกับว่า Sheets ตีความยังไง)
+// ฟังก์ชันนี้เช็คให้ครอบคลุมทั้งสองแบบ กันปัญหา "เปิดร้านแล้วระบบไม่รู้ว่าเปิด"
+function isOpenValue(v) {
+  return v === true || v === 'TRUE' || v === 'true';
+}
+
+function isShopOpen(shop) {
+  return !!shop && isOpenValue(shop.isOpen);
+}
+
+function saveShop(studentId, shopName, styleId, isOpen, tagline) {
+  const sh = ensureShopsSheet();
+  const rows = rowsToObjects(sh);
+  const existing = rows.find(r => r.studentId === studentId);
+  const openedAt = (existing && existing.openedAt) ? existing.openedAt : new Date().toISOString();
+  const taglineValue = tagline !== undefined ? tagline : (existing ? (existing.tagline || '') : '');
+  if (existing) {
+    sh.getRange(existing._row, 1, 1, 6).setValues([[studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt, taglineValue]]);
+  } else {
+    sh.appendRow([studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt, taglineValue]);
   }
 }
 
-async function listForSale(itemName, btn){
-  const qty = Number(document.getElementById(`sellqty_${itemName}`).value);
-  const price = Number(document.getElementById(`sellprice_${itemName}`).value);
-  if(!price){ showToast('ใส่ราคาขายด้วย'); return; }
-  if(btn){ btn.disabled = true; btn.textContent = 'กำลังวางขาย...'; }
-  showToast('กำลังวางขาย...');
-  try {
-    const r = await api('listForSale', { studentId, itemName, qty, price });
-    if(r.error) showToast(r.error); else showToast(`วางขาย ${itemName} x${qty} แล้ว`);
-    await fetchState();
-  } catch (err) {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = 'วางขาย'; }
+function getAllShopsMap() {
+  const shops = rowsToObjects(ensureShopsSheet());
+  const map = {};
+  shops.forEach(s => { map[s.studentId] = s; });
+  return map;
+}
+
+// ---------- ACTION HANDLERS ----------
+function handleJoin(body) {
+  const cfg = getConfigMap();
+  if (body.code !== cfg.JOIN_CODE) return { error: 'รหัสห้องไม่ถูกต้อง' };
+
+  const sh = sheet(SHEETS.STUDENTS);
+  const students = rowsToObjects(sh);
+  let existing = students.find(s => s.name === body.name);
+  if (existing) {
+    sh.getRange(existing._row, 5).setValue(new Date().toISOString());
+    return { studentId: existing.id, name: existing.name, cash: existing.cash };
   }
+  const id = genId('stu');
+  sh.appendRow([id, body.name, cfg.START_CASH, new Date().toISOString(), new Date().toISOString()]);
+  return { studentId: id, name: body.name, cash: cfg.START_CASH };
 }
 
-async function cancelListing(listingId, btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'กำลังยกเลิก...'; }
-  showToast('กำลังยกเลิกรายการ...');
-  try {
-    const r = await api('cancelListing', { studentId, listingId });
-    if(r.error) showToast(r.error); else showToast('ยกเลิกรายการแล้ว');
-    await fetchState();
-  } catch (err) {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = 'ยกเลิก'; }
+function handleState(body) {
+  const cfg = getConfigMap();
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น กรุณาเข้าเกมใหม่' };
+
+  const priceMap = getSupplierPriceMap();
+  const inventory = getInventory(body.studentId);
+  const allListings = rowsToObjects(sheet(SHEETS.LISTINGS)).filter(l => l.qty > 0);
+  const shopsMap = getAllShopsMap();
+  const myShop = shopsMap[body.studentId];
+
+  // มูลค่าสุทธิ = เงินสด + มูลค่าสต๊อกตามราคาตลาดปัจจุบัน
+  const students = rowsToObjects(sheet(SHEETS.STUDENTS));
+  const invAll = rowsToObjects(sheet(SHEETS.INVENTORY));
+  const listingsAll = allListings;
+
+  const leaderboard = students.map(s => {
+    const myInv = invAll.filter(i => i.studentId === s.id);
+    const invValue = myInv.reduce((sum, i) => sum + (i.qty * (priceMap[i.itemName] || 0)), 0);
+    const myListingsValue = listingsAll.filter(l => l.sellerId === s.id)
+      .reduce((sum, l) => sum + (l.qty * l.price), 0);
+    return {
+      name: s.name,
+      cash: s.cash,
+      netWorth: Math.round(s.cash + invValue + myListingsValue)
+    };
+  }).sort((a, b) => b.netWorth - a.netWorth);
+
+  let timeLeftSeconds = null;
+  if (cfg.GAME_STARTED_AT) {
+    const started = new Date(cfg.GAME_STARTED_AT).getTime();
+    const elapsedSec = (Date.now() - started) / 1000;
+    timeLeftSeconds = Math.max(0, Math.round(cfg.ROUND_MINUTES * 60 - elapsedSec));
   }
+
+  return {
+    gameName: cfg.GAME_NAME,
+    gameEnded: isOpenValue(cfg.GAME_ENDED) || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
+    timeLeftSeconds,
+    student: { id: student.id, name: student.name, cash: student.cash },
+    supplierItems: getSupplierItems(),
+    inventory: inventory.map(i => ({ itemName: i.itemName, qty: i.qty, avgCost: Math.round(i.avgCost * 100) / 100 })),
+    myListings: allListings.filter(l => l.sellerId === body.studentId)
+      .map(l => ({ id: l.id, itemName: l.itemName, qty: l.qty, price: l.price })),
+    market: allListings.filter(l => l.sellerId !== body.studentId)
+      .map(l => {
+        const sellerShop = shopsMap[l.sellerId];
+        return {
+          id: l.id,
+          sellerId: l.sellerId,
+          sellerName: l.sellerName,
+          shopName: (sellerShop && isOpenValue(sellerShop.isOpen)) ? sellerShop.shopName : ('แผง' + l.sellerName),
+          styleId: (sellerShop && isOpenValue(sellerShop.isOpen)) ? sellerShop.styleId : null,
+          shopTagline: (sellerShop && isOpenValue(sellerShop.isOpen)) ? (sellerShop.tagline || '') : '',
+          itemName: l.itemName, qty: l.qty, price: l.price
+        };
+      }),
+    leaderboard: leaderboard.slice(0, 15),
+    truckCost: getTruckCost(),
+    truckStyles: TRUCK_STYLES,
+    myShop: {
+      opened: isShopOpen(myShop),
+      name: myShop ? myShop.shopName : '',
+      styleId: myShop ? myShop.styleId : TRUCK_STYLES[0].id,
+      tagline: myShop ? (myShop.tagline || '') : ''
+    },
+    auction: {
+      active: cfg.AUCTION_ACTIVE === 'TRUE',
+      item: cfg.AUCTION_ITEM || '',
+      price: Number(cfg.AUCTION_PRICE || 0),
+      winnerName: cfg.AUCTION_WINNER_NAME || '-',
+      emoji: cfg.AUCTION_EMOJI || '🎁'
+    }
+  };
 }
 
-async function buyListing(listingId, btn){
-  const qty = Number(document.getElementById(`buymarket_${listingId}`).value);
-  if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
-  showToast('กำลังซื้อ...');
-  try {
-    const r = await api('buyListing', { studentId, listingId, qty });
-    if(r.error) showToast(r.error); else showToast(`ซื้อสำเร็จ! -${r.total} บ.`);
-    await fetchState();
-  } catch (err) {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = 'ซื้อ'; }
+function handleTeacherState(body) {
+  const cfg = getConfigMap();
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+
+  const students = rowsToObjects(sheet(SHEETS.STUDENTS));
+  const invAll = rowsToObjects(sheet(SHEETS.INVENTORY));
+  const listingsAll = rowsToObjects(sheet(SHEETS.LISTINGS)).filter(l => l.qty > 0);
+  const shopsMap = getAllShopsMap();
+  const priceMap = getSupplierPriceMap();
+  const txAll = rowsToObjects(sheet(SHEETS.TRANSACTIONS));
+
+  const players = students.map(s => {
+    const myInv = invAll.filter(i => i.studentId === s.id && i.qty > 0);
+    const invValue = myInv.reduce((sum, i) => sum + (i.qty * (priceMap[i.itemName] || 0)), 0);
+    const myListingsValue = listingsAll.filter(l => l.sellerId === s.id)
+      .reduce((sum, l) => sum + (l.qty * l.price), 0);
+    const shop = shopsMap[s.id];
+    return {
+      name: s.name,
+      cash: Math.round(s.cash),
+      netWorth: Math.round(s.cash + invValue + myListingsValue),
+      itemsHeld: myInv.reduce((sum, i) => sum + i.qty, 0),
+      shopOpen: isShopOpen(shop),
+      shopName: shop ? shop.shopName : '',
+      joinedAt: s.joinedAt
+    };
+  }).sort((a, b) => b.netWorth - a.netWorth);
+
+  // ยอดขายรวมและจำนวนธุรกรรม
+  let totalVolume = 0;
+  txAll.forEach(t => {
+    const m = String(t.qtyPriceTotal).match(/=\s*([\d.]+)\s*$/);
+    if (m) totalVolume += Number(m[1]);
+  });
+
+  // ยอดขายแยกตามสินค้า (จำนวนที่ขายได้ทั้งหมด)
+  const itemVolume = {};
+  txAll.forEach(t => {
+    itemVolume[t.itemName] = (itemVolume[t.itemName] || 0) + 1;
+  });
+  const topItems = Object.entries(itemVolume)
+    .map(([itemName, count]) => ({ itemName, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+
+  const recentTx = txAll.slice(-25).reverse().map(t => ({
+    time: t.time, buyerName: t.buyerName, sellerName: t.sellerName,
+    itemName: t.itemName, detail: t.qtyPriceTotal
+  }));
+
+  let timeLeftSeconds = null;
+  if (cfg.GAME_STARTED_AT) {
+    const started = new Date(cfg.GAME_STARTED_AT).getTime();
+    const elapsedSec = (Date.now() - started) / 1000;
+    timeLeftSeconds = Math.max(0, Math.round(cfg.ROUND_MINUTES * 60 - elapsedSec));
   }
+
+  return {
+    gameName: cfg.GAME_NAME,
+    joinCode: cfg.JOIN_CODE,
+    gameStarted: !!cfg.GAME_STARTED_AT,
+    gameEnded: isOpenValue(cfg.GAME_ENDED) || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
+    timeLeftSeconds,
+    playerCount: students.length,
+    shopsOpenCount: Object.values(shopsMap).filter(isShopOpen).length,
+    totalTransactions: txAll.length,
+    totalVolume: Math.round(totalVolume),
+    supplierItems: getSupplierItems(),
+    topItems,
+    players,
+    recentTx
+  };
 }
 
-// ถ้าเคยเข้าเกมไปแล้ว (มี studentId ใน localStorage) ให้เข้าเลย
-if(studentId){
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('main').classList.add('show');
-  document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
-  startPolling();
+function handleTeacherStart(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  startGameCore();
+  return handleTeacherState(body);
 }
-</script>
 
-</body>
-</html>
+function handleTeacherEnd(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  endGameCore();
+  return handleTeacherState(body);
+}
+
+function handleTeacherReset(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  if (String(body.confirm || '') !== 'RESET') return { error: 'ต้องยืนยันการรีเซ็ตก่อน' };
+  setupCore();
+  // หมายเหตุ: setupCore() ตั้ง TEACHER_KEY กลับเป็นค่าเริ่มต้น (teacher123) เสมอ
+  // จึงไม่เรียก handleTeacherState ต่อ เพราะ key เดิมที่ใช้ล็อกอินจะไม่ตรงกับ key ใหม่แล้ว
+  return { ok: true, reset: true, message: 'รีเซ็ตข้อมูลเรียบร้อยแล้ว รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้น' };
+}
+
+function handleTeacherGetConfig(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  const cfg = getConfigMap();
+  return {
+    ok: true,
+    config: {
+      GAME_NAME: cfg.GAME_NAME || '',
+      JOIN_CODE: cfg.JOIN_CODE || '',
+      START_CASH: Number(cfg.START_CASH) || 0,
+      ROUND_MINUTES: Number(cfg.ROUND_MINUTES) || 0,
+      TRUCK_COST: getTruckCost(),
+      TEACHER_KEY: getTeacherKey()
+    }
+  };
+}
+
+function handleTeacherUpdateConfig(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  const c = body.config || {};
+
+  const gameName = String(c.GAME_NAME || '').trim();
+  if (!gameName) return { error: 'กรุณาตั้งชื่อเกม' };
+
+  const joinCode = String(c.JOIN_CODE || '').trim().toUpperCase();
+  if (!joinCode) return { error: 'กรุณาตั้งรหัสห้อง' };
+
+  const startCash = Number(c.START_CASH);
+  if (isNaN(startCash) || startCash < 0) return { error: 'เงินเริ่มต้นต้องเป็นตัวเลขไม่ติดลบ' };
+
+  const roundMinutes = Number(c.ROUND_MINUTES);
+  if (isNaN(roundMinutes) || roundMinutes <= 0) return { error: 'เวลาต่อรอบต้องมากกว่า 0 นาที' };
+
+  const truckCost = Number(c.TRUCK_COST);
+  if (isNaN(truckCost) || truckCost < 0) return { error: 'ค่าเปิดร้านรถขายของต้องเป็นตัวเลขไม่ติดลบ' };
+
+  const teacherKey = String(c.TEACHER_KEY || '').trim();
+  if (!teacherKey || teacherKey.length < 4) return { error: 'รหัสครูต้องมีอย่างน้อย 4 ตัวอักษร' };
+
+  setConfig('GAME_NAME', gameName);
+  setConfig('JOIN_CODE', joinCode);
+  setConfig('START_CASH', startCash);
+  setConfig('ROUND_MINUTES', roundMinutes);
+  setConfig('TRUCK_COST', truckCost);
+  setConfig('TEACHER_KEY', teacherKey);
+
+  return {
+    ok: true,
+    config: {
+      GAME_NAME: gameName,
+      JOIN_CODE: joinCode,
+      START_CASH: startCash,
+      ROUND_MINUTES: roundMinutes,
+      TRUCK_COST: truckCost,
+      TEACHER_KEY: teacherKey
+    }
+  };
+}
+
+function handleBuyFromSupplier(body) {
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+  const qty = Number(body.qty);
+  if (!qty || qty <= 0) return { error: 'จำนวนไม่ถูกต้อง' };
+
+  const priceMap = getSupplierPriceMap();
+  const unitPrice = priceMap[body.itemName];
+  if (!unitPrice) return { error: 'ไม่พบสินค้านี้' };
+
+  const total = unitPrice * qty;
+  if (student.cash < total) return { error: 'เงินไม่พอซื้อ' };
+
+  updateStudentCash(student.id, student.cash - total);
+  addInventory(student.id, body.itemName, qty, unitPrice);
+  return { ok: true, spent: total, unitPrice };
+}
+
+function handleOpenShop(body) {
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+
+  const shopName = String(body.shopName || '').trim();
+  if (!shopName) return { error: 'ตั้งชื่อร้านด้วยนะ' };
+  if (shopName.length > 24) return { error: 'ชื่อร้านยาวไปหน่อย (ไม่เกิน 24 ตัวอักษร)' };
+  const tagline = String(body.tagline || '').trim();
+  if (tagline.length > 40) return { error: 'คำโปรยร้านยาวไปหน่อย (ไม่เกิน 40 ตัวอักษร)' };
+
+  const style = getTruckStyle(body.styleId);
+  const existing = getShop(student.id);
+  if (isShopOpen(existing)) return { error: 'เธอเปิดร้านไปแล้วนะ' };
+
+  const cost = getTruckCost();
+  if (student.cash < cost) return { error: 'เงินไม่พอซื้อรถขายของ (ต้องมี ' + cost + ' บ.)' };
+
+  updateStudentCash(student.id, student.cash - cost);
+  saveShop(student.id, shopName, style.id, true, tagline);
+  return { ok: true, spent: cost, shop: { name: shopName, styleId: style.id, tagline, opened: true } };
+}
+
+function handleUpdateShop(body) {
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+
+  const existing = getShop(student.id);
+  if (!isShopOpen(existing)) return { error: 'ต้องเปิดร้านก่อนถึงจะแก้ไขได้' };
+
+  const shopName = String(body.shopName || '').trim() || existing.shopName;
+  if (shopName.length > 24) return { error: 'ชื่อร้านยาวไปหน่อย (ไม่เกิน 24 ตัวอักษร)' };
+  const tagline = body.tagline !== undefined ? String(body.tagline || '').trim() : (existing.tagline || '');
+  if (tagline.length > 40) return { error: 'คำโปรยร้านยาวไปหน่อย (ไม่เกิน 40 ตัวอักษร)' };
+  const style = getTruckStyle(body.styleId || existing.styleId);
+
+  saveShop(student.id, shopName, style.id, true, tagline);
+  return { ok: true, shop: { name: shopName, styleId: style.id, tagline, opened: true } };
+}
+
+function handleListForSale(body) {
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+  const qty = Number(body.qty);
+  const price = Number(body.price);
+  if (!qty || qty <= 0 || !price || price <= 0) return { error: 'ข้อมูลไม่ถูกต้อง' };
+
+  const shop = getShop(student.id);
+  if (!isShopOpen(shop)) return { error: 'ต้องเปิดร้านรถขายของก่อนถึงจะวางขายได้ (ดูการ์ด "รถขายของของฉัน")' };
+
+  removeInventory(student.id, body.itemName, qty); // จะ throw ถ้าของไม่พอ
+  const sh = sheet(SHEETS.LISTINGS);
+  const id = genId('lst');
+  sh.appendRow([id, student.id, student.name, body.itemName, qty, price, new Date().toISOString()]);
+  return { ok: true, listingId: id };
+}
+
+function handleCancelListing(body) {
+  const sh = sheet(SHEETS.LISTINGS);
+  const rows = rowsToObjects(sh);
+  const listing = rows.find(l => l.id === body.listingId && l.sellerId === body.studentId);
+  if (!listing) return { error: 'ไม่พบรายการ' };
+
+  addInventory(listing.sellerId, listing.itemName, listing.qty, 0); // คืนของ (ต้นทุนเดิมไม่กระทบเพราะคืนแบบ 0 จะเฉลี่ยลง - ปรับปรุงได้ตามต้องการ)
+  sh.getRange(listing._row, 5).setValue(0); // qty = 0 (ปิดรายการ)
+  return { ok: true };
+}
+
+function handleBuyListing(body) {
+  const buyer = findStudent(body.studentId);
+  if (!buyer) return { error: 'ไม่พบผู้เล่น' };
+  const qty = Number(body.qty);
+  if (!qty || qty <= 0) return { error: 'จำนวนไม่ถูกต้อง' };
+
+  const sh = sheet(SHEETS.LISTINGS);
+  const rows = rowsToObjects(sh);
+  const listing = rows.find(l => l.id === body.listingId);
+  if (!listing || listing.qty <= 0) return { error: 'รายการนี้ถูกซื้อ/ยกเลิกไปแล้ว' };
+  if (listing.sellerId === buyer.id) return { error: 'ซื้อของร้านตัวเองไม่ได้' };
+  if (qty > listing.qty) return { error: 'สินค้าเหลือไม่พอ' };
+
+  const total = listing.price * qty;
+  if (buyer.cash < total) return { error: 'เงินไม่พอซื้อ' };
+
+  const seller = findStudent(listing.sellerId);
+
+  // ตัดเงินผู้ซื้อ, เพิ่มของให้ผู้ซื้อ
+  updateStudentCash(buyer.id, buyer.cash - total);
+  addInventory(buyer.id, listing.itemName, qty, listing.price);
+
+  // เพิ่มเงินผู้ขาย
+  updateStudentCash(seller.id, seller.cash + total);
+
+  // อัปเดตจำนวนใน listing
+  sh.getRange(listing._row, 5).setValue(listing.qty - qty);
+
+  // บันทึกธุรกรรม
+  const tx = sheet(SHEETS.TRANSACTIONS);
+  tx.appendRow([genId('tx'), new Date().toISOString(), buyer.id, buyer.name, seller.id, seller.name, listing.itemName, qty + ' x ' + listing.price + ' = ' + total]);
+
+  return { ok: true, total };
+}
+// ================= ระบบประมูล =================
+function handleTeacherStartAuction(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  
+  // สุ่มของแรร์ (เลือกสินค้าที่มี volatility สูงกว่า 0.4)
+  const items = rowsToObjects(sheet(SHEETS.ITEMS));
+  const rareItems = items.filter(i => i.volatility >= 0.4);
+  const targetItem = rareItems[Math.floor(Math.random() * rareItems.length)] || items[0];
+  
+  setConfig('AUCTION_ACTIVE', 'TRUE');
+  setConfig('AUCTION_ITEM', targetItem.itemName);
+  setConfig('AUCTION_PRICE', targetItem.basePrice); // เริ่มต้นที่ราคาฐาน
+  setConfig('AUCTION_WINNER', '');
+  setConfig('AUCTION_WINNER_NAME', '-');
+  setConfig('AUCTION_EMOJI', targetItem.emoji);
+  
+  return handleTeacherState(body);
+}
+
+function handleTeacherEndAuction(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  const cfg = getConfigMap();
+  
+  if (cfg.AUCTION_WINNER && cfg.AUCTION_WINNER !== '') {
+    addInventory(cfg.AUCTION_WINNER, cfg.AUCTION_ITEM, 1, Number(cfg.AUCTION_PRICE));
+    const tx = sheet(SHEETS.TRANSACTIONS);
+    tx.appendRow([genId('tx'), new Date().toISOString(), cfg.AUCTION_WINNER, cfg.AUCTION_WINNER_NAME, 'SYSTEM', 'ลานประมูล', cfg.AUCTION_ITEM, 'ชนะประมูล 1 x ' + cfg.AUCTION_PRICE]);
+  }
+  
+  setConfig('AUCTION_ACTIVE', 'FALSE');
+  return handleTeacherState(body);
+}
+
+function handleBidAuction(body) {
+  const cfg = getConfigMap();
+  if (cfg.AUCTION_ACTIVE !== 'TRUE') return { error: 'ปิดประมูลไปแล้ว!' };
+  
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+  
+  let curPrice = Number(cfg.AUCTION_PRICE || 0);
+  let newPrice = curPrice + 1; // สู้ราคาทีละ 1 เหรียญ
+  
+  if (cfg.AUCTION_WINNER === student.id) return { error: 'เธอเป็นผู้นำอยู่แล้ว!' };
+  if (student.cash < newPrice) return { error: 'เงินไม่พอประมูล' };
+
+  // คืนเงินให้คนนำคนเก่า
+  if (cfg.AUCTION_WINNER && cfg.AUCTION_WINNER !== '') {
+    const oldWinner = findStudent(cfg.AUCTION_WINNER);
+    if (oldWinner) updateStudentCash(oldWinner.id, oldWinner.cash + curPrice);
+  }
+
+  // หักเงินคนสู้ราคาคนใหม่
+  updateStudentCash(student.id, student.cash - newPrice);
+  setConfig('AUCTION_PRICE', newPrice);
+  setConfig('AUCTION_WINNER', student.id);
+  setConfig('AUCTION_WINNER_NAME', student.name);
+  
+  return { ok: true };
+}
