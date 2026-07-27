@@ -456,14 +456,20 @@ let truckCost = 0;
 let myShop = { opened: false, name: '', styleId: null };
 let shopFormStyleId = null; // สไตล์ที่เลือกไว้ชั่วคราวในฟอร์ม
 let shopEditing = false;
+let shopNameDraft = null; // เก็บชื่อร้านที่พิมพ์ค้างไว้ ไม่ให้หายตอน poll สถานะทุก 3 วิ
 
 function styleById(id){ return truckStyles.find(t => t.id === id) || truckStyles[0] || {id:'red',label:'',emoji:'🚚',colorA:'#d1453a',colorB:'#f7ded9'}; }
+
+function escapeAttr(str){
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
 
 function renderShop(shop, cost, styles){
   const el = document.getElementById('shopBox');
   if(!shop) return;
 
   if(shop.opened && !shopEditing){
+    shopNameDraft = null; // ไม่ได้อยู่ในฟอร์ม ล้าง draft ทิ้ง
     const st = styleById(shop.styleId);
     el.innerHTML = `
       <div class="shop-summary">
@@ -478,17 +484,23 @@ function renderShop(shop, cost, styles){
     return;
   }
 
+  // ก่อน re-render ทับ ให้จำข้อความที่พิมพ์ค้างไว้ในกล่องชื่อร้าน (กันหายตอน poll ทุก 3 วิ)
+  const existingInput = document.getElementById('shopNameInput');
+  const hadFocus = existingInput && document.activeElement === existingInput;
+  if(existingInput) shopNameDraft = existingInput.value;
+
   // ฟอร์มตั้งร้าน (ครั้งแรก) หรือแก้ไขร้าน
   if(shopFormStyleId === null){
     shopFormStyleId = shop.opened ? shop.styleId : (styles[0] && styles[0].id);
   }
+  const nameValue = shopNameDraft !== null ? shopNameDraft : (shop.opened ? shop.name : '');
   const intro = shop.opened
     ? `<p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 6px">แก้ไขชื่อร้าน/ธีมรถได้ฟรี</p>`
     : `<p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 6px">ต้องมีรถขายของก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>`;
 
   el.innerHTML = `
     ${intro}
-    <input class="shop-name-input" id="shopNameInput" maxlength="24" placeholder="ตั้งชื่อร้าน เช่น มะม่วงพี่หนึ่ง" value="${shop.opened ? shop.name : ''}">
+    <input class="shop-name-input" id="shopNameInput" maxlength="24" placeholder="ตั้งชื่อร้าน เช่น มะม่วงพี่หนึ่ง" value="${escapeAttr(nameValue)}" oninput="shopNameDraft=this.value">
     <div class="shop-setup-styles" id="styleChoices">
       ${styles.map(st => `
         <div class="style-choice ${st.id===shopFormStyleId?'selected':''}" onclick="selectShopStyle('${st.id}')">
@@ -502,6 +514,15 @@ function renderShop(shop, cost, styles){
     </button>
     ${shop.opened ? `<button class="btn btn-cancel" style="margin-top:8px;width:100%" onclick="cancelEditShop()">ยกเลิก</button>` : ''}
   `;
+
+  if(hadFocus){
+    const newInput = document.getElementById('shopNameInput');
+    if(newInput){
+      newInput.focus();
+      const len = newInput.value.length;
+      newInput.setSelectionRange(len, len);
+    }
+  }
 }
 
 function selectShopStyle(id){
@@ -512,12 +533,14 @@ function selectShopStyle(id){
 function startEditShop(){
   shopEditing = true;
   shopFormStyleId = myShop.styleId;
+  shopNameDraft = null;
   renderShop(myShop, truckCost, truckStyles);
 }
 
 function cancelEditShop(){
   shopEditing = false;
   shopFormStyleId = null;
+  shopNameDraft = null;
   renderShop(myShop, truckCost, truckStyles);
 }
 
@@ -528,6 +551,7 @@ async function submitOpenShop(){
   if(r.error){ showToast(r.error); return; }
   showToast('เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
   shopFormStyleId = null;
+  shopNameDraft = null;
   fetchState();
 }
 
@@ -538,8 +562,10 @@ async function submitUpdateShop(){
   showToast('บันทึกร้านค้าแล้ว');
   shopEditing = false;
   shopFormStyleId = null;
+  shopNameDraft = null;
   fetchState();
 }
+
 
 let itemEmojiMap = {};
 function itemEmoji(name){ return itemEmojiMap[name] || '📦'; }
