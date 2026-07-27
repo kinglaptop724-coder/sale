@@ -590,7 +590,7 @@
     </div>
   </div>
 
-  <!-- ส่วนที่ 3 (ใหม่): โซนขวา ธีมสีเขียว (ตลาดกลาง) -->
+  <!-- ส่วนที่ 3: โซนขวา ธีมสีเขียว (ตลาดกลาง) -->
   <div class="game-window window-green">
     <div class="window-header">
       <div class="header-left"><span>🛒</span> ตลาดกลาง</div>
@@ -601,10 +601,12 @@
     <div class="window-body">
       <div class="card">
         <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount"></span></h3>
-        <!-- เพิ่มช่องค้นหาตรงนี้ -->
+        
+        <!-- ช่องค้นหา ต้องอยู่ตรงนี้ครับ (นอกกล่อง marketList) -->
         <div style="margin-bottom: 14px;">
-          <input type="text" id="marketSearchInput" class="shop-name-input" placeholder="🔍 ค้นหาชื่อร้าน หรือ ชื่อสินค้า..." oninput="handleMarketSearch()" style="border-radius: 10px;">
+          <input type="text" id="marketSearchInput" class="shop-name-input" placeholder="🔍 ค้นหาชื่อร้าน หรือ ชื่อสินค้า..." oninput="handleMarketSearch()" style="border-radius: 10px; width: 100%;">
         </div>
+        
         <div id="marketList" class="stall-grid"></div>
         <div id="marketMoreBtnBox"></div>
       </div>
@@ -966,32 +968,41 @@ function renderMarket(listings, ended){
   renderMarketGrid();
 }
 
+let marketSearchQuery = '';
+
+function handleMarketSearch() {
+  const inputEl = document.getElementById('marketSearchInput');
+  if (!inputEl) return;
+  marketSearchQuery = inputEl.value.trim().toLowerCase();
+  renderMarketGrid();
+}
+
 function renderMarketGrid(){
   const el = document.getElementById('marketList');
   const btnBox = document.getElementById('marketMoreBtnBox');
   if(!lastMarketShops){ return; }
 
-  // 1. กรองร้านค้าและสินค้าตามคำค้นหา (ถัามี)
+  // 1. ระบบกรองคำค้นหา (ดักจับ Error กรณีไม่มีข้อมูล)
   let filteredShops = lastMarketShops;
   if (marketSearchQuery) {
     filteredShops = lastMarketShops.map(shop => {
-      const displayName = (shop.shopName || ('แผง' + shop.sellerName)).toLowerCase();
-      const matchShopName = displayName.includes(marketSearchQuery);
+      const sName = shop.sellerName || '';
+      const shName = shop.shopName || ('แผง' + sName);
+      const displayName = shName.toLowerCase();
       
-      // ค้นหาในรายการสินค้าของร้านนี้ด้วย
-      const matchedGoods = shop.goods.filter(g => g.itemName.toLowerCase().includes(marketSearchQuery));
+      const matchShopName = displayName.includes(marketSearchQuery);
+      const matchedGoods = (shop.goods || []).filter(g => (g.itemName || '').toLowerCase().includes(marketSearchQuery));
       
       if (matchShopName) {
-        return shop; // ถ้าชื่อร้านตรง ให้แสดงสินค้าทั้งหมดในร้าน
+        return shop; 
       } else if (matchedGoods.length > 0) {
-        return { ...shop, goods: matchedGoods }; // ถ้าชื่อสินค้าตรง ให้แสดงร้าน แต่โชว์เฉพาะสินค้าที่ค้นเจอ
+        return { ...shop, goods: matchedGoods }; 
       }
       return null;
     }).filter(shop => shop !== null);
   }
 
   const total = filteredShops.length;
-  // ถ้ากำลังค้นหาอยู่ ให้โชว์ผลลัพธ์ทั้งหมดเลยไม่ต้องซ่อน แต่ถ้าไม่ได้ค้นหา ก็ใช้ระบบซ่อนเหมือนเดิม
   const shownShops = (marketExpanded || marketSearchQuery) ? filteredShops : filteredShops.slice(0, MARKET_PAGE_SIZE);
 
   if (total === 0) {
@@ -1000,7 +1011,7 @@ function renderMarketGrid(){
     return;
   }
 
-  // 2. สร้างหน้าตาร้านค้าตามที่ถูกกรองแล้ว
+  // 2. สร้างหน้าตาร้านค้า
   const html = shownShops.map(({sellerName, shopName, styleId, shopTagline, goods}) => {
     const st = styleId ? styleById(styleId) : null;
     const emoji = st ? st.emoji : vendorEmoji(sellerName);
@@ -1044,7 +1055,7 @@ function renderMarketGrid(){
 
   // 3. จัดการปุ่ม "ดูร้านค้าทั้งหมด"
   if(total <= MARKET_PAGE_SIZE || marketSearchQuery){
-    btnBox.innerHTML = ''; // ซ่อนปุ่มถ้าจำนวนร้านน้อย หรือถัากำลังค้นหาอยู่
+    btnBox.innerHTML = ''; 
   } else if(marketExpanded){
     btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">▲ ย่อรายการ</button>`;
   } else {
