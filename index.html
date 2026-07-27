@@ -441,11 +441,32 @@ function showToast(msg){
 }
 
 async function api(action, payload){
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action, ...payload })
-  });
-  return res.json();
+  // กันหน้าเว็บ "ค้าง" ถ้าเซิร์ฟเวอร์ไม่ตอบกลับเลย (เช่น Apps Script ช้าตอนมีคนเล่นพร้อมกันเยอะ)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...payload }),
+      signal: controller.signal
+    });
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      // เซิร์ฟเวอร์ตอบกลับมาไม่ใช่ JSON (เช่น หน้า error ของ Google) — อย่าปล่อยให้ throw ค้าง
+      // networkError:true ใช้แยกจาก error จริงของเกม (เช่น "ไม่พบผู้เล่น") กันไม่ให้ fetchState() เข้าใจผิดว่า session หมดอายุแล้วเตะออกจากเกม
+      return { error: 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', networkError: true };
+    }
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return { error: 'เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่อีกครั้ง', networkError: true };
+    }
+    return { error: 'การเชื่อมต่อขัดข้อง กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่', networkError: true };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function goTeacher(){
@@ -485,6 +506,12 @@ async function fetchState(){
   if(!studentId) return;
   const s = await api('state', { studentId });
   if(s.error){
+    // เน็ตสะดุด/เซิร์ฟเวอร์ตอบช้าชั่วคราว -> แค่แจ้งเตือน ไม่ควรเตะออกจากเกม รอบ polling ถัดไปจะลองใหม่เอง
+    if (s.networkError) {
+      showToast(s.error);
+      return;
+    }
+    // error จริงจากเซิร์ฟเวอร์ (เช่น "ไม่พบผู้เล่น กรุณาเข้าเกมใหม่") ถึงจะเตะออกจากเกม
     showToast(s.error);
     localStorage.removeItem('marketStudentId');
     clearInterval(pollTimer);
@@ -608,18 +635,29 @@ async function submitShopModal(){
   showToast(myShop.opened ? 'กำลังบันทึกร้านค้า...' : 'กำลังเปิดร้าน...');
 
   const action = myShop.opened ? 'updateShop' : 'openShop';
-  const r = await api(action, { studentId, shopName, tagline, styleId: shopModalStyleId });
+  try {
+    const r = await api(action, { studentId, shopName, tagline, styleId: shopModalStyleId });
 
-  if(r.error){
-    showToast(r.error);
+    if(r.error){
+      showToast(r.error);
+      return; // finally ด้านล่างจะปลดล็อกปุ่มให้เสมอ
+    }
+
+    showToast(myShop.opened ? 'บันทึกร้านค้าแล้ว' : 'เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
+    // การเปิด/แก้ไขร้านสำเร็จแล้วฝั่งเซิร์ฟเวอร์ ณ จุดนี้
+    // ถ้า fetchState() ถัดไปมีปัญหา (เน็ตสะดุด ฯลฯ) ก็ไม่ควรทำให้ modal ค้าง จึงครอบด้วย try/catch แยก
+    try {
+      await fetchState();
+    } catch (stateErr) {
+      // ไม่เป็นไร ข้อมูลจะถูกดึงใหม่รอบ polling ถัดไปอยู่แล้ว
+    }
+    closeShopModal();
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+  } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;
-    return;
   }
-
-  showToast(myShop.opened ? 'บันทึกร้านค้าแล้ว' : 'เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
-  await fetchState(); // รอให้ข้อมูลอัปเดตจริงก่อน ค่อยปิดหน้าต่าง กันปัญหาเปิดร้านแล้วข้อมูลยังไม่ขึ้น
-  closeShopModal();
 }
 
 // ปิดป๊อปอัพเมื่อคลิกพื้นหลังมืดรอบนอกกล่อง
@@ -775,9 +813,14 @@ async function buySupplier(itemName, btn){
   const qty = Number(document.getElementById(`buyqty_${itemName}`).value);
   if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
   showToast('กำลังซื้อ...');
-  const r = await api('buyFromSupplier', { studentId, itemName, qty });
-  if(r.error) showToast(r.error); else showToast(`ซื้อ ${itemName} x${qty} สำเร็จ`);
-  fetchState();
+  try {
+    const r = await api('buyFromSupplier', { studentId, itemName, qty });
+    if(r.error) showToast(r.error); else showToast(`ซื้อ ${itemName} x${qty} สำเร็จ`);
+    await fetchState(); // fetchState สร้าง UI ใหม่ทั้งการ์ด ปุ่มจะถูกแทนที่/ปลดล็อกอัตโนมัติ
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    if(btn){ btn.disabled = false; btn.textContent = 'ซื้อ'; }
+  }
 }
 
 async function listForSale(itemName, btn){
@@ -786,26 +829,41 @@ async function listForSale(itemName, btn){
   if(!price){ showToast('ใส่ราคาขายด้วย'); return; }
   if(btn){ btn.disabled = true; btn.textContent = 'กำลังวางขาย...'; }
   showToast('กำลังวางขาย...');
-  const r = await api('listForSale', { studentId, itemName, qty, price });
-  if(r.error) showToast(r.error); else showToast(`วางขาย ${itemName} x${qty} แล้ว`);
-  fetchState();
+  try {
+    const r = await api('listForSale', { studentId, itemName, qty, price });
+    if(r.error) showToast(r.error); else showToast(`วางขาย ${itemName} x${qty} แล้ว`);
+    await fetchState();
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    if(btn){ btn.disabled = false; btn.textContent = 'วางขาย'; }
+  }
 }
 
 async function cancelListing(listingId, btn){
   if(btn){ btn.disabled = true; btn.textContent = 'กำลังยกเลิก...'; }
   showToast('กำลังยกเลิกรายการ...');
-  const r = await api('cancelListing', { studentId, listingId });
-  if(r.error) showToast(r.error); else showToast('ยกเลิกรายการแล้ว');
-  fetchState();
+  try {
+    const r = await api('cancelListing', { studentId, listingId });
+    if(r.error) showToast(r.error); else showToast('ยกเลิกรายการแล้ว');
+    await fetchState();
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    if(btn){ btn.disabled = false; btn.textContent = 'ยกเลิก'; }
+  }
 }
 
 async function buyListing(listingId, btn){
   const qty = Number(document.getElementById(`buymarket_${listingId}`).value);
   if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
   showToast('กำลังซื้อ...');
-  const r = await api('buyListing', { studentId, listingId, qty });
-  if(r.error) showToast(r.error); else showToast(`ซื้อสำเร็จ! -${r.total} บ.`);
-  fetchState();
+  try {
+    const r = await api('buyListing', { studentId, listingId, qty });
+    if(r.error) showToast(r.error); else showToast(`ซื้อสำเร็จ! -${r.total} บ.`);
+    await fetchState();
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    if(btn){ btn.disabled = false; btn.textContent = 'ซื้อ'; }
+  }
 }
 
 // ถ้าเคยเข้าเกมไปแล้ว (มี studentId ใน localStorage) ให้เข้าเลย
