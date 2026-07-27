@@ -3,583 +3,455 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เกมขายของออนไลน์</title>
+<title>ตลาดนัดนักเรียน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* ===== โทนสี: มาร์เก็ตออนไลน์การ์ตูน ฟ้าใส-ส้มขายของ-น้ำเงินซื้อของ ===== */
-    --sky-1:#5cc4f2;
-    --sky-2:#8fe0ff;
-    --grass:#3f9e46;
-    --grass-dark:#2c7a33;
-    --ink:#182233;
-    --ink-soft:#4a5b71;
-    --panel:#ffffff;
-    --gold:#ffd23f;
-    --gold-dark:#dd9d0e;
-
-    --sell:#ff9a3c;
-    --sell-2:#ff7a1a;
-    --sell-dark:#c85e10;
-    --sell-panel:#fdf1de;
-    --sell-panel-2:#fbe4bd;
-
-    --buy:#3f9bf0;
-    --buy-2:#2f7fe0;
-    --buy-dark:#1c5fa8;
-    --buy-panel:#eef6ff;
-    --buy-panel-2:#dcecfa;
-
-    --green:#4cc26c;
-    --green-dark:#2d8a48;
-    --red:#ff5a52;
-    --red-dark:#c73a32;
-    --purple:#7f5aa2;
-
-    --line:#182233;
-    --line-soft:rgba(24,34,51,0.14);
-    font-family:'Kanit','Segoe UI',sans-serif;
+    /* ===== โทนสี: ธีมเกมพิกเซล ท้องฟ้าสดใส ร้านค้าไม้สีสันจัดจ้าน ===== */
+    --sky:#bfeaff;
+    --cream: #fff3d6;
+    --cream-2: #ffe6ad;
+    --panel: #fffaf0;
+    --wood: #a06a3c;
+    --wood-dark: #6b4423;
+    --ink: #2c1c0d;
+    --navy: #1c3f73;
+    --navy-2: #254e8f;
+    --gold: #ffd23f;
+    --gold-dark: #dd9d0e;
+    --green: #4cc26c;
+    --green-dark: #2d8a48;
+    --orange: #ff9a3c;
+    --orange-dark: #e2701a;
+    --red: #ff5a52;
+    --red-dark: #c73a32;
+    --line: #2c1c0d;
+    --line-soft: rgba(44,28,13,0.25);
+    --pixel-font: 'Press Start 2P', 'Kanit', cursive;
+    font-family: 'Kanit', 'Segoe UI', sans-serif;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
-    background:linear-gradient(180deg,var(--sky-1),var(--sky-2) 55%,#cdeeff 100%);
-    color:var(--ink);
+    background:
+      linear-gradient(180deg, rgba(20,35,60,0.35), rgba(255,243,214,0.55) 55%, rgba(255,230,173,0.7)),
+      url('https://i.postimg.cc/k5BD7vGg/Chat-GPT-Image-Jul-27-2026-05-32-48-PM.png') center top / cover no-repeat;
+    background-attachment: fixed;
+    color: var(--ink);
     min-height:100vh;
-    padding-bottom:78px;
+    padding-bottom:60px;
     -webkit-font-smoothing:antialiased;
     font-weight:500;
   }
   h1,h2,h3{font-family:inherit;}
   ::selection{background:var(--gold);color:var(--ink);}
-  :focus-visible{outline:3px solid var(--buy-dark);outline-offset:2px;border-radius:4px;}
-  button{font-family:inherit;}
+  :focus-visible{outline:3px solid var(--navy);outline-offset:2px;border-radius:4px;}
 
-  /* ===================== HERO ===================== */
-  .hero{
-    position:relative;
-    background:
-      linear-gradient(180deg, rgba(10,20,40,0.15), rgba(10,20,40,0.55) 88%),
-      url('https://i.postimg.cc/k5BD7vGg/Chat-GPT-Image-Jul-27-2026-05-32-48-PM.png') center 30% / cover no-repeat;
-    padding:16px 16px 22px;
-    border-bottom:5px solid var(--line);
-    border-radius:0 0 26px 26px;
-    box-shadow:0 6px 0 rgba(0,0,0,0.15);
-  }
-  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-  .hero-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
-  .pill{
-    font-weight:700;font-size:0.82rem;
-    background:#fff;border:3px solid var(--line);border-radius:20px;
-    padding:7px 13px;display:flex;align-items:center;gap:6px;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.28);
-    color:var(--ink);
-  }
-  .pill.cash{background:linear-gradient(180deg,#ffe27a,var(--gold));}
-  .pill.timer{background:#fff;}
-  .pill.timer.low{background:var(--red);color:#fff;animation:pulse 1s infinite steps(2);}
-  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
-  .teacher-btn{
-    background:rgba(255,255,255,0.92);border:3px solid var(--line);color:var(--ink-soft);
-    font-size:0.75rem;font-weight:700;padding:7px 11px;border-radius:20px;cursor:pointer;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.25);
+  .lightstring{
+    height:10px;width:100%;
+    background:repeating-linear-gradient(90deg, var(--gold) 0 16px, var(--orange) 16px 32px);
+    border-bottom:3px solid var(--line);
+    box-shadow:0 2px 0 rgba(0,0,0,0.15);
   }
 
-  .hero-title{
-    text-align:center;margin:18px auto 6px;max-width:640px;
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 20px;
+    background: linear-gradient(180deg, #2c5a9e, var(--navy));
+    border-bottom:4px solid var(--line);
+    position:sticky;top:0;z-index:10;
+    box-shadow:0 4px 0 rgba(0,0,0,0.18);
   }
-  .hero-title .line1{
-    font-size:1.15rem;font-weight:800;color:var(--gold);
-    text-shadow:2px 2px 0 var(--line),-2px -2px 0 var(--line),2px -2px 0 var(--line),-2px 2px 0 var(--line);
-    display:flex;align-items:center;justify-content:center;gap:10px;
-  }
-  .hero-title .line2{
-    font-size:2.5rem;line-height:1.05;font-weight:800;margin:2px 0;
-    color:#ffb15c;
-    -webkit-text-stroke:3px var(--line);
-    text-shadow:4px 4px 0 var(--sell-dark);
-    letter-spacing:1px;
-  }
-  .hero-title .line3{
-    font-size:1.7rem;font-weight:800;
-    color:#7fd4ff;
-    -webkit-text-stroke:2.5px var(--line);
-    text-shadow:3px 3px 0 var(--buy-dark);
-  }
-  .hero-sub{
-    display:block;margin:12px auto 0;max-width:420px;text-align:center;
-    background:rgba(115,70,150,0.92);color:#fff;font-weight:700;font-size:0.85rem;
-    padding:9px 18px;border-radius:20px;border:3px solid var(--line);
+  .topbar h1{font-size:1.05rem;margin:0;letter-spacing:0.2px;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,0.35);}
+  .topbar h1 span:first-child{
+    font-size:1.3rem;background:var(--gold);border:3px solid var(--line);
+    border-radius:50%;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;
     box-shadow:2px 2px 0 rgba(0,0,0,0.3);
   }
-
-  .hero-cta{display:flex;gap:14px;justify-content:center;margin-top:18px;flex-wrap:wrap;}
-  .cta-btn{
-    display:flex;align-items:center;gap:9px;
-    padding:14px 26px;border-radius:16px;border:3px solid var(--line);
-    font-weight:800;font-size:1rem;cursor:pointer;color:#fff;
-    transition:transform .08s, box-shadow .08s;
+  .topbar h1 span:last-child{color:var(--gold);}
+  .stats{display:flex;gap:10px;align-items:center;font-size:0.9rem;}
+  .cash{
+    font-family:var(--pixel-font);
+    font-weight:400;color:var(--ink);font-size:0.85rem;
+    background:linear-gradient(180deg,#ffe27a,var(--gold));
+    border:3px solid var(--line);
+    padding:8px 14px;border-radius:20px;box-shadow:3px 3px 0 rgba(0,0,0,0.3);
+    display:flex;align-items:center;gap:8px;
   }
-  .cta-btn:active{transform:translateY(4px);box-shadow:none !important;}
-  .cta-sell{background:linear-gradient(180deg,#ffb15c,var(--sell-2));box-shadow:0 5px 0 var(--sell-dark);}
-  .cta-buy{background:linear-gradient(180deg,#6fc0ff,var(--buy-2));box-shadow:0 5px 0 var(--buy-dark);}
-  .cta-btn .ico{font-size:1.25rem;}
+  .timer{
+    font-family:var(--pixel-font);
+    padding:8px 14px;border-radius:20px;background:#fff;border:3px solid var(--line);
+    font-weight:400;letter-spacing:0.3px;font-size:0.78rem;box-shadow:3px 3px 0 rgba(0,0,0,0.3);
+  }
+  .timer.low{background:var(--red);border-color:var(--line);color:#fff;animation:pixel-pulse 1s infinite steps(2);}
+  @keyframes pixel-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 
-  /* ===================== LOGIN ===================== */
   #login{
-    max-width:400px;margin:22px auto 0;padding:28px 24px;
+    max-width:400px;margin:10vh auto;padding:32px 26px;
     background:var(--panel);
     border:5px solid var(--line);border-radius:22px;
     text-align:center;
-    box-shadow:8px 8px 0 rgba(0,0,0,0.22);
+    box-shadow:8px 8px 0 rgba(0,0,0,0.3);
   }
-  #login h2{color:var(--sell-dark);margin:0 0 8px;font-size:1.25rem;font-weight:800;}
-  #login p.sub{color:var(--ink-soft);font-size:0.85rem;margin:0 0 18px;font-weight:500;line-height:1.5;}
+  #login h2{color:var(--orange-dark);margin:0 0 8px;font-size:1.4rem;font-weight:800;text-shadow:2px 2px 0 rgba(0,0,0,0.12);}
+  #login p.sub{color:var(--wood-dark);font-size:0.85rem;margin:0 0 20px;font-weight:500;line-height:1.5;}
   #login input{
     width:100%;padding:13px 14px;margin:7px 0;border-radius:12px;border:3px solid var(--line);
-    background:#fbfbfb;color:var(--ink);font-size:0.95rem;font-family:inherit;font-weight:500;
+    background:#fffef8;color:var(--ink);font-size:0.95rem;font-family:inherit;font-weight:500;
+    transition:box-shadow .15s;
   }
-  #login input:focus{box-shadow:0 0 0 4px rgba(63,155,240,0.28);outline:none;}
-  #login input::placeholder{color:#9aa6b4;}
+  #login input:focus{box-shadow:0 0 0 4px rgba(255,154,60,0.35);outline:none;}
+  #login input::placeholder{color:#b0977a;}
   #login button{
     width:100%;padding:14px;margin-top:14px;border:3px solid var(--line);border-radius:14px;
-    background:linear-gradient(180deg,#6fc0ff,var(--buy-2));
-    color:#fff;font-weight:800;font-size:1rem;cursor:pointer;
-    box-shadow:0 5px 0 var(--buy-dark);
+    background:linear-gradient(180deg,#ffb15c,var(--orange));
+    color:var(--ink);font-weight:800;font-size:1rem;cursor:pointer;letter-spacing:0.2px;
+    box-shadow:0 5px 0 var(--orange-dark);
     transition:transform .1s, box-shadow .1s;
   }
-  #login button:active{transform:translateY(5px);box-shadow:0 0 0 var(--buy-dark);}
+  #login button:hover{filter:brightness(1.05);}
+  #login button:active{transform:translateY(5px);box-shadow:0 0 0 var(--orange-dark);}
   #login .msg{color:var(--red-dark);min-height:20px;font-size:0.85rem;margin-top:10px;font-weight:700;}
 
-  /* ===================== DASHBOARD HINT (after join) ===================== */
-  #dashHint{max-width:640px;margin:20px auto 0;padding:0 16px;text-align:center;}
-  #dashHint .hint-card{
-    background:rgba(255,255,255,0.9);border:3px dashed var(--line);border-radius:18px;
-    padding:16px;font-size:0.85rem;color:var(--ink-soft);font-weight:600;
+  .teacher-access{
+    position:fixed;top:14px;right:16px;z-index:20;
+    background:#fff;border:3px solid var(--line);
+    color:var(--wood-dark);font-family:inherit;font-size:0.78rem;font-weight:700;
+    padding:7px 12px;border-radius:20px;cursor:pointer;
+    box-shadow:3px 3px 0 rgba(0,0,0,0.25);
+    transition:transform .1s;
   }
-  .gameover{
-    max-width:440px;margin:14px auto 0;text-align:center;padding:26px;
-    background:var(--panel);border:5px solid var(--line);border-radius:20px;
-    box-shadow:8px 8px 0 rgba(0,0,0,0.25);
-  }
-  .gameover h2{color:var(--sell-dark);font-size:1.3rem;margin-top:0;}
-  .gameover p{color:var(--ink-soft);}
+  .teacher-access:hover{transform:translateY(-2px);}
+  .teacher-access:active{transform:translateY(1px);box-shadow:1px 1px 0 rgba(0,0,0,0.25);}
 
-  main{max-width:640px;margin:0 auto;padding:0 16px;display:none;}
+  main{max-width:1100px;margin:0 auto;padding:22px 20px;display:none;}
   main.show{display:block;}
 
-  /* ===================== SHARED PANEL (buy/sell full modal) ===================== */
-  .panel-overlay{
-    position:fixed;inset:0;z-index:70;display:none;
-    background:rgba(10,18,32,0.55);
-    padding:14px;align-items:flex-start;justify-content:center;overflow-y:auto;
-  }
-  .panel-overlay.show{display:flex;}
-  .panel-box{
-    width:100%;max-width:760px;margin:2vh auto;
+  .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
+  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+
+  .card{
     background:var(--panel);
-    border:5px solid var(--line);border-radius:22px;overflow:hidden;
-    box-shadow:8px 8px 0 rgba(0,0,0,0.35);
+    border:4px solid var(--line);border-radius:18px;
+    padding:16px 18px;margin-bottom:18px;
+    box-shadow:6px 6px 0 rgba(0,0,0,0.18);
   }
-  .panel-header{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:14px 16px;border-bottom:4px solid var(--line);color:#fff;
-  }
-  .panel-header h3{margin:0;font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px;}
-  .panel-header-right{display:flex;align-items:center;gap:8px;}
-  .panel-close{
-    background:#fff;border:2px solid var(--line);color:var(--ink);width:32px;height:32px;border-radius:10px;
-    cursor:pointer;font-weight:800;box-shadow:2px 2px 0 rgba(0,0,0,0.25);
-  }
-  .panel-close:active{transform:translateY(2px);box-shadow:none;}
-
-  .panel-header.sell{background:linear-gradient(180deg,#ffb15c,var(--sell-2));}
-  .panel-header.buy{background:linear-gradient(180deg,#6fc0ff,var(--buy-2));}
-
-  .panel-body{display:flex;min-height:420px;max-height:76vh;}
-  .panel-side{
-    width:96px;flex-shrink:0;padding:12px 6px;display:flex;flex-direction:column;gap:6px;
-    border-right:4px solid var(--line);overflow-y:auto;
-  }
-  .panel-side.sell{background:var(--sell-panel-2);}
-  .panel-side.buy{background:var(--buy-panel-2);}
-  .side-btn{
-    display:flex;flex-direction:column;align-items:center;gap:4px;
-    padding:9px 4px;border-radius:12px;border:2px solid transparent;cursor:pointer;
-    font-size:0.68rem;font-weight:700;color:var(--ink-soft);text-align:center;background:transparent;
-  }
-  .side-btn .ico{font-size:1.25rem;}
-  .side-btn.active.sell-active{background:#fff;border-color:var(--line);color:var(--sell-dark);box-shadow:2px 2px 0 rgba(0,0,0,0.2);}
-  .side-btn.active.buy-active{background:#fff;border-color:var(--line);color:var(--buy-dark);box-shadow:2px 2px 0 rgba(0,0,0,0.2);}
-
-  .panel-main{flex:1;overflow-y:auto;padding:14px;background:#fffefb;}
-  .panel-main.buy-bg{background:#f7fbff;}
-  .panel-section-title{font-size:0.92rem;font-weight:800;margin:0 0 10px;color:var(--ink);display:flex;align-items:center;gap:6px;}
-
-  .panel-footer{
-    display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;
-    padding:10px 16px;border-top:3px dashed var(--line-soft);background:#fff;font-size:0.78rem;font-weight:700;color:var(--ink-soft);
+  .card h3{
+    margin:0 0 14px;font-size:0.95rem;color:var(--ink);font-weight:700;
+    display:flex;align-items:center;gap:10px;
+    padding-bottom:10px;border-bottom:3px dashed var(--line-soft);
+    letter-spacing:0.2px;
   }
 
-  /* toolbar for buy panel: search + sort */
-  .buy-toolbar{display:flex;gap:8px;margin-bottom:12px;}
-  .buy-search{
-    flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--line);
-    font-family:inherit;font-size:0.85rem;background:#fff;
+  .item-row{
+    display:flex;align-items:center;gap:10px;padding:9px 6px;
+    border-bottom:2px solid rgba(44,28,13,0.08);font-size:0.9rem;
+    border-radius:10px;
   }
-  .buy-sort{
-    padding:10px 10px;border-radius:12px;border:2px solid var(--line);
-    font-family:inherit;font-size:0.8rem;background:#fff;font-weight:600;
-  }
+  .item-row:hover{background:rgba(255,210,63,0.14);}
+  .item-row:last-child{border-bottom:none;}
+  .emoji{font-size:1.35rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--line);border-radius:8px;flex-shrink:0;}
+  .item-name{flex:1;font-weight:600;}
 
-  /* ===================== PRODUCT GRID CARDS ===================== */
-  .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
-  .prod-card{
-    background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 8px;
-    display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.14);
+  .price-tag{
+    display:inline-flex;align-items:center;gap:4px;
+    font-family:var(--pixel-font);
+    background:linear-gradient(180deg,#fff1b8,var(--gold));color:var(--ink);font-weight:400;font-size:0.72rem;
+    padding:6px 12px;border-radius:20px;
+    border:2px solid var(--line);
+    position:relative;white-space:nowrap;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.2);
   }
-  .prod-emoji{
-    font-size:1.9rem;width:56px;height:56px;display:flex;align-items:center;justify-content:center;
-    background:var(--sell-panel);border:2px solid var(--line);border-radius:12px;
+  .price-tag::before{content:"🪙";font-family:initial;font-size:0.9em;}
+  .item-price{min-width:74px;text-align:right;justify-content:flex-end;}
+
+  .qty-input{
+    width:52px;padding:7px 4px;border-radius:8px;border:2px solid var(--line);
+    background:#fff;color:var(--ink);text-align:center;font-family:inherit;font-size:0.88rem;font-weight:700;
   }
-  .panel-main.buy-bg .prod-emoji{background:var(--buy-panel);}
-  .prod-name{font-weight:700;font-size:0.78rem;line-height:1.2;min-height:1.9em;}
-  .prod-qty{font-size:0.68rem;color:var(--ink-soft);font-weight:600;}
-  .prod-price{
-    display:inline-flex;align-items:center;gap:3px;font-weight:800;font-size:0.78rem;
-    background:linear-gradient(180deg,#fff1b8,var(--gold));border:2px solid var(--line);
-    padding:4px 9px;border-radius:16px;box-shadow:1px 1px 0 rgba(0,0,0,0.2);
+  .price-input{
+    width:70px;padding:7px 4px;border-radius:8px;border:2px solid var(--line);
+    background:#fff;color:var(--ink);text-align:center;font-family:inherit;font-size:0.88rem;font-weight:700;
   }
-  .prod-price::before{content:"🪙";font-size:0.85em;}
-  .prod-inputs{display:flex;gap:4px;width:100%;justify-content:center;flex-wrap:wrap;}
-  .prod-input{
-    width:46px;padding:5px 3px;border-radius:8px;border:2px solid var(--line);
-    text-align:center;font-family:inherit;font-size:0.78rem;font-weight:700;background:#fff;
-  }
-  .prod-input.wide{width:64px;}
-  .prod-btn{
-    width:100%;padding:8px 6px;border:2px solid var(--line);border-radius:10px;cursor:pointer;
-    font-weight:800;font-size:0.76rem;color:#fff;
+  .qty-input:focus,.price-input:focus{box-shadow:0 0 0 3px rgba(255,154,60,0.3);outline:none;}
+
+  .btn{
+    padding:9px 15px;border:2px solid var(--line);border-radius:10px;cursor:pointer;font-weight:800;
+    font-size:0.85rem;white-space:nowrap;font-family:inherit;letter-spacing:0.1px;
     transition:transform .08s, box-shadow .08s;
   }
-  .prod-btn:active{transform:translateY(2px);box-shadow:none !important;}
-  .prod-btn.buy{background:linear-gradient(180deg,#6fd48a,var(--green));box-shadow:0 3px 0 var(--green-dark);}
-  .prod-btn.sell{background:linear-gradient(180deg,#ffb15c,var(--sell-2));box-shadow:0 3px 0 var(--sell-dark);}
-  .prod-btn.cancel{background:#fff;color:var(--red-dark);box-shadow:0 3px 0 rgba(199,58,50,0.35);}
-  .prod-btn:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;transform:none;}
-  .prod-add-tile{
-    border:2px dashed var(--line-soft);border-radius:14px;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:4px;color:var(--ink-soft);font-weight:700;font-size:0.75rem;
-    min-height:120px;
-  }
+  .btn:active{transform:translateY(3px);box-shadow:none !important;}
+  .btn-buy{background:linear-gradient(180deg,#7de097,var(--green));color:#0d3d1c;box-shadow:0 4px 0 var(--green-dark);}
+  .btn-sell{background:linear-gradient(180deg,#ffb15c,var(--orange));color:#4a2400;box-shadow:0 4px 0 var(--orange-dark);}
+  .btn-cancel{background:#fff;border:2px solid var(--red);color:var(--red-dark);box-shadow:0 4px 0 rgba(199,58,50,0.35);}
+  .btn-buy:hover,.btn-sell:hover{filter:brightness(1.08);}
+  .btn-cancel:hover{background:rgba(255,90,82,0.08);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;filter:none;transform:none;box-shadow:none;}
 
-  .empty{
-    color:var(--ink-soft);font-size:0.82rem;padding:16px 10px;text-align:center;
-    border:2px dashed var(--line-soft);border-radius:12px;font-weight:500;grid-column:1/-1;
-  }
+  .inv-item{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:2px solid rgba(44,28,13,0.08);}
+  .inv-item:last-child{border-bottom:none;}
+  .inv-cost{font-size:0.75rem;color:var(--wood-dark);}
 
-  /* market shops inside buy panel */
-  .shop-block{
-    border:3px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden;
-    box-shadow:3px 3px 0 rgba(0,0,0,0.14);
+  .leaderboard-row{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;
+    position:relative;overflow:hidden;margin-bottom:4px;border:2px solid transparent;
   }
-  .shop-block-head{
-    display:flex;align-items:center;gap:8px;padding:8px 10px;
-    background:linear-gradient(180deg,#e9f4ff,#cfe9ff);border-bottom:2px solid var(--line);
+  .leaderboard-row .bar{
+    position:absolute;left:0;top:0;bottom:0;
+    background:linear-gradient(90deg, rgba(255,210,63,0.4), transparent);
+    z-index:0;
   }
-  .shop-block-emoji{width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
-  .shop-block-name{font-weight:800;font-size:0.85rem;}
-  .shop-block-tag{font-size:0.68rem;color:var(--ink-soft);}
-  .shop-block-tagline{font-size:0.7rem;font-style:italic;color:var(--green-dark);padding:0 10px 6px;font-weight:600;}
-  .shop-block-goods{padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;background:#fff;}
-  .market-more-box{text-align:center;margin-top:6px;}
+  .leaderboard-row.me{background:rgba(255,210,63,0.2);border-color:var(--line);}
+  .rank{width:26px;text-align:center;font-weight:800;color:var(--green-dark);z-index:1;font-size:0.95rem;}
+  .lb-name{flex:1;z-index:1;font-weight:600;}
+  .lb-worth{font-family:var(--pixel-font);font-weight:400;color:var(--orange-dark);z-index:1;font-size:0.78rem;}
+
+  .stall-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:30px 16px;
+  }
+  .market-shop-count{font-size:0.78rem;font-weight:600;color:var(--wood-dark);}
+  .market-more-box{text-align:center;margin-top:16px;}
   .btn-market-more{
     background:#fff;border:2px solid var(--line);color:var(--ink);
-    padding:9px 18px;border-radius:20px;font-size:0.8rem;box-shadow:0 3px 0 rgba(0,0,0,0.2);cursor:pointer;font-weight:700;
+    padding:10px 20px;border-radius:20px;font-size:0.85rem;box-shadow:0 4px 0 rgba(0,0,0,0.2);
   }
-  .btn-market-more:active{transform:translateY(3px);box-shadow:none;}
-  .market-shop-count{font-size:0.72rem;font-weight:600;color:var(--ink-soft);margin-left:4px;}
+  .btn-market-more:hover{background:rgba(255,210,63,0.18);}
+  .btn-market-more:active{transform:translateY(4px);box-shadow:none;}
 
-  /* category sidebar buttons in buy panel */
-  .cat-list{display:flex;flex-direction:column;gap:6px;}
+  .truck{
+    position:relative;
+    padding-top:4px;
+    filter:drop-shadow(4px 6px 0 rgba(0,0,0,0.16));
+  }
 
-  /* shop / finance / settings tabs inside sell panel */
-  .shop-summary{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px;box-shadow:2px 2px 0 rgba(0,0,0,0.14);}
-  .shop-summary .truck-emoji-badge{width:48px;height:48px;border-radius:50%;background:var(--sell-panel);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
+  /* หลังคาผ้าใบลายทาง แบบแผงขายของ */
+  .truck-header{
+    position:relative;
+    display:flex;align-items:center;gap:8px;
+    background:repeating-linear-gradient(
+      100deg,
+      var(--truck-a) 0px, var(--truck-a) 16px,
+      rgba(255,255,255,0.92) 16px, rgba(255,255,255,0.92) 28px
+    );
+    border-radius:14px 14px 0 0;
+    padding:9px 11px 12px;
+    border:3px solid var(--line);
+    border-bottom:none;
+  }
+  /* ขอบหลังคาหยักเป็นลอน */
+  .truck-header::after{
+    content:'';
+    position:absolute; left:0; right:0; bottom:-8px; height:16px;
+    background-image: radial-gradient(circle at 9px 0, transparent 8px, var(--truck-a) 9px);
+    background-size:18px 16px;
+    background-repeat:repeat-x;
+    filter:brightness(0.92);
+  }
+  .truck-emoji-badge{
+    width:34px;height:34px;border-radius:50%;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.15rem;border:2px solid var(--line);
+    flex-shrink:0;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.25);
+  }
+  .truck-name{font-weight:800;font-size:0.85rem;line-height:1.15;color:#1c1c1c;}
+  .truck-tag{font-size:0.68rem;color:rgba(44,28,13,0.65);}
+  .truck-tagline{
+    position:relative;z-index:1;
+    font-size:0.72rem;font-style:italic;color:var(--green-dark);font-weight:600;
+    background:#fff;border-left:3px solid var(--line);border-right:3px solid var(--line);
+    padding:9px 10px 5px;text-align:center;
+  }
+
+  /* ชั้นวางของ + แผงหน้าร้าน */
+  .truck-window{
+    position:relative;z-index:1;
+    background: var(--truck-b);
+    border:3px solid var(--line);
+    border-top:none;
+    padding:14px 10px 10px;
+  }
+  .truck-goods{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+    gap:8px;
+  }
+  .truck-good{
+    background:#fff;border-radius:10px;padding:8px 7px 7px;
+    font-size:0.85rem;border:2px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.15);
+  }
+  .truck-good-top{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:6px;}
+  .truck-good-emoji{
+    font-size:1.9rem;line-height:1;
+    background:var(--cream-2);border:2px solid var(--line);border-radius:8px;padding:5px 8px;margin-bottom:2px;
+  }
+  .truck-good-name{font-size:0.74rem;font-weight:700;line-height:1.2;}
+  .truck-good-price{margin-top:1px;}
+  .truck-good-controls{display:flex;gap:4px;align-items:center;justify-content:center;width:100%;}
+  .truck-good-controls .qty-input{width:38px;padding:5px 4px;}
+  .truck-good-controls .btn{padding:6px 8px;font-size:0.72rem;}
+  .truck-empty-note{color:var(--wood-dark);font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
+
+  /* เคาน์เตอร์ไม้ด้านล่างแผง แทนล้อรถ */
+  .truck-counter{
+    height:16px;border-radius:0 0 10px 10px;
+    background:repeating-linear-gradient(90deg, var(--wood) 0 14px, var(--wood-dark) 14px 28px);
+    border:3px solid var(--line);border-top:none;
+  }
+
+  .shop-setup-styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:12px 0;}
+  .style-choice{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    padding:10px 6px;border-radius:12px;cursor:pointer;
+    border:2px solid var(--line);background:#fff;
+    font-size:0.72rem;text-align:center;color:var(--wood-dark);font-weight:600;
+    transition:transform .1s;
+  }
+  .style-choice:hover{transform:translateY(-2px);}
+  .style-choice .swatch-emoji{font-size:1.5rem;}
+  .style-choice.selected{border-color:var(--orange-dark);background:rgba(255,154,60,0.18);color:var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,0.2);}
+  .shop-name-input{
+    width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);
+    background:#fff;color:var(--ink);font-size:0.95rem;margin-bottom:6px;font-family:inherit;font-weight:600;
+  }
+  .shop-name-input:focus{box-shadow:0 0 0 3px rgba(255,154,60,0.3);outline:none;}
+  .shop-summary{display:flex;align-items:center;gap:14px;}
+  .shop-summary .truck-emoji-badge{width:48px;height:48px;font-size:1.6rem;background:var(--cream-2);}
   .shop-summary-info{flex:1;}
-  .shop-summary-name{font-weight:800;font-size:1rem;}
-  .shop-summary-tagline{font-size:0.78rem;color:var(--green-dark);font-style:italic;margin:2px 0;font-weight:600;}
-  .shop-summary-tag{font-size:0.75rem;color:var(--ink-soft);}
+  .shop-summary-name{font-weight:800;font-size:1.05rem;}
+  .shop-summary-tagline{font-size:0.8rem;color:var(--green-dark);font-style:italic;margin:2px 0;font-weight:600;}
+  .shop-summary-tag{font-size:0.78rem;color:var(--wood-dark);}
   .btn-shop{
-    background:linear-gradient(180deg,#ffb15c,var(--sell-2));color:#fff;
-    width:100%;padding:13px;font-size:0.92rem;border-radius:12px;border:2px solid var(--line);
-    box-shadow:0 4px 0 var(--sell-dark);cursor:pointer;font-weight:800;margin-top:10px;
+    background:linear-gradient(180deg,#ffb15c,var(--orange));color:#4a2400;
+    width:100%;padding:13px;font-size:0.95rem;border-radius:12px;
+    box-shadow:0 5px 0 var(--orange-dark);
   }
-  .btn-edit-shop{background:#fff;border:2px solid var(--line);color:var(--ink);border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,0.2);width:100%;padding:11px;cursor:pointer;font-weight:700;margin-top:10px;}
+  .btn-edit-shop{background:#fff;border:2px solid var(--line);color:var(--ink);border-radius:12px;box-shadow:0 4px 0 rgba(0,0,0,0.2);}
 
-  .finance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-  .finance-card{background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px;text-align:center;box-shadow:2px 2px 0 rgba(0,0,0,0.14);}
-  .finance-card .fv{font-size:1.1rem;font-weight:800;color:var(--sell-dark);}
-  .finance-card .fl{font-size:0.7rem;color:var(--ink-soft);font-weight:600;margin-top:2px;}
-
-  .settings-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border:2px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;font-size:0.85rem;font-weight:600;}
-  .btn-logout{background:#fff;border:2px solid var(--red);color:var(--red-dark);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:0.8rem;}
-
-  /* order list rows */
-  .order-row{
-    display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-radius:12px;
-    padding:9px 10px;margin-bottom:8px;box-shadow:2px 2px 0 rgba(0,0,0,0.12);
-  }
-  .order-row .emoji{font-size:1.3rem;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--sell-panel);border:2px solid var(--line);border-radius:8px;flex-shrink:0;}
-  .order-row .item-name{flex:1;font-weight:700;font-size:0.85rem;}
-
-  /* ===================== SHOP SETUP MODAL ===================== */
+  /* ===== หน้าต่างจัดการ/ตกแต่งร้านค้า (ป๊อปอัพ) ===== */
   .modal-overlay{
-    position:fixed;inset:0;z-index:80;display:none;
+    position:fixed;inset:0;z-index:60;display:none;
     align-items:center;justify-content:center;padding:16px;
     background:rgba(15,25,40,0.68);
   }
   .modal-overlay.show{display:flex;}
   .modal-panel{
-    width:100%;max-width:420px;max-height:88vh;overflow-y:auto;
+    width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
     background:var(--panel);
     border:5px solid var(--line);border-radius:22px;padding:22px;
     box-shadow:8px 8px 0 rgba(0,0,0,0.4);
   }
   .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-  .modal-header h3{margin:0;font-size:1.05rem;color:var(--sell-dark);font-weight:800;}
+  .modal-header h3{margin:0;font-size:1.1rem;color:var(--orange-dark);font-weight:800;}
   .modal-close{
-    background:#fff;border:2px solid var(--line);color:var(--ink-soft);font-size:1rem;
+    background:#fff;border:2px solid var(--line);color:var(--wood-dark);font-size:1.1rem;
     cursor:pointer;line-height:1;padding:5px 10px;border-radius:8px;box-shadow:2px 2px 0 rgba(0,0,0,0.2);
   }
+  .modal-close:hover{color:var(--red-dark);}
   .modal-close:active{transform:translateY(2px);box-shadow:none;}
-  .modal-sub{font-size:0.8rem;color:var(--ink-soft);margin:6px 0 16px;font-weight:500;}
-  .modal-field-label{font-size:0.72rem;color:var(--ink-soft);margin:10px 0 4px;font-weight:700;}
-  .shop-setup-styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:12px 0;}
-  .style-choice{
-    display:flex;flex-direction:column;align-items:center;gap:5px;
-    padding:10px 6px;border-radius:12px;cursor:pointer;
-    border:2px solid var(--line);background:#fff;
-    font-size:0.7rem;text-align:center;color:var(--ink-soft);font-weight:600;
-  }
-  .style-choice .swatch-emoji{font-size:1.4rem;}
-  .style-choice.selected{border-color:var(--sell-dark);background:rgba(255,154,60,0.18);color:var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,0.2);}
-  .shop-name-input{
-    width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);
-    background:#fff;color:var(--ink);font-size:0.92rem;margin-bottom:6px;font-family:inherit;font-weight:600;
-  }
+  .modal-sub{font-size:0.82rem;color:var(--wood-dark);margin:6px 0 16px;font-weight:500;}
+  .modal-field-label{font-size:0.75rem;color:var(--wood-dark);margin:10px 0 4px;font-weight:700;letter-spacing:0.2px;}
 
-  /* ===================== LEADERBOARD MODAL ===================== */
-  .leaderboard-row{
-    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;
-    position:relative;overflow:hidden;margin-bottom:6px;border:2px solid var(--line);background:#fff;
+  .empty{
+    color:var(--wood-dark);font-size:0.85rem;padding:14px 10px;text-align:center;
+    border:2px dashed var(--line-soft);border-radius:12px;font-weight:500;
   }
-  .leaderboard-row .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,210,63,0.45),transparent);z-index:0;}
-  .leaderboard-row.me{background:rgba(255,210,63,0.25);}
-  .rank{width:26px;text-align:center;font-weight:800;color:var(--green-dark);z-index:1;font-size:0.92rem;}
-  .lb-name{flex:1;z-index:1;font-weight:700;font-size:0.85rem;}
-  .lb-worth{font-weight:800;color:var(--sell-dark);z-index:1;font-size:0.82rem;}
-
-  /* ===================== BOTTOM NAV ===================== */
-  .bottom-nav{
-    position:fixed;left:0;right:0;bottom:0;z-index:40;
-    background:linear-gradient(180deg,var(--grass),var(--grass-dark));
-    border-top:5px solid var(--line);
-    display:flex;justify-content:space-around;align-items:center;
-    padding:8px 6px 10px;box-shadow:0 -4px 0 rgba(0,0,0,0.15);
-  }
-  .nav-btn{
-    background:none;border:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;
-    font-size:0.65rem;font-weight:700;cursor:pointer;padding:4px 8px;border-radius:10px;
-  }
-  .nav-btn .ico{font-size:1.25rem;}
-  .nav-btn:active{transform:translateY(2px);}
-  .piggy-badge{
-    position:absolute;right:8px;top:-22px;
-    width:44px;height:44px;border-radius:50%;background:linear-gradient(180deg,#ffc7db,#ff9fc0);
-    border:3px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.4rem;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.25);
-  }
-
   .toast{
-    position:fixed;bottom:88px;left:50%;transform:translateX(-50%);
-    background:var(--ink);border:3px solid var(--line);color:#fff;
-    padding:11px 22px;border-radius:14px;font-size:0.86rem;opacity:0;transition:opacity .3s;
-    z-index:90;font-weight:700;box-shadow:4px 4px 0 rgba(0,0,0,0.3);pointer-events:none;max-width:90vw;text-align:center;
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--navy);border:3px solid var(--line);color:#fff;
+    padding:11px 22px;border-radius:14px;font-size:0.9rem;opacity:0;transition:opacity .3s;
+    z-index:50;font-weight:700;box-shadow:4px 4px 0 rgba(0,0,0,0.3);
   }
   .toast.show{opacity:1;}
-
-  @media(max-width:520px){
-    .hero-title .line2{font-size:1.9rem;}
-    .hero-title .line3{font-size:1.35rem;}
-    .panel-side{width:74px;}
-    .side-btn{font-size:0.6rem;}
+  .gameover{
+    max-width:440px;margin:10vh auto;text-align:center;padding:32px;
+    background:var(--panel);
+    border:5px solid var(--line);border-radius:20px;
+    box-shadow:8px 8px 0 rgba(0,0,0,0.3);
   }
+  .gameover h2{color:var(--orange-dark);font-size:1.4rem;margin-top:0;}
+  .gameover p{color:var(--wood-dark);}
 </style>
 </head>
 <body>
 
-<div class="hero" id="heroBox">
-  <div class="hero-top">
-    <button type="button" class="teacher-btn" onclick="goTeacher()">👩‍🏫 คุณครู</button>
-    <div class="hero-pills" id="heroStats" style="display:none">
-      <div class="pill timer" id="timerBox">⏳ --:--</div>
-      <div class="pill cash">🪙 <span class="js-cash">0</span></div>
-    </div>
-  </div>
+<div class="lightstring"></div>
 
-  <div class="hero-title">
-    <div class="line1">🛒 <span id="heroEyebrow">เกม</span> 📦</div>
-    <div class="line2" id="gameNameLabelBig">ขายของ</div>
-    <div class="line3">ออนไลน์</div>
-  </div>
-  <div class="hero-sub">สร้างร้านของคุณ ขายให้ปัง ซื้อให้คุ้ม!</div>
-
-  <div class="hero-cta" id="heroCta" style="display:none">
-    <button type="button" class="cta-btn cta-sell" onclick="openSellPanel()"><span class="ico">🏪</span> ขายของ</button>
-    <button type="button" class="cta-btn cta-buy" onclick="openBuyPanel()"><span class="ico">🛒</span> ซื้อของ</button>
-  </div>
-</div>
+<button type="button" class="teacher-access" onclick="goTeacher()">👩‍🏫 สำหรับคุณครู</button>
 
 <div id="login">
-  <h2>🛒 เข้าสู่ตลาด</h2>
-  <p class="sub">🧱 ซื้อมาขายไป เปิดร้านของตัวเอง แล้วไปวัดกันที่กระดานผู้นำ!</p>
+  <h2>🛒 ตลาดนัดนักเรียน</h2>
+  <p class="sub">🧱 ซื้อมาขายไป เปิดร้านรถขายของของตัวเอง แล้วไปวัดกันที่กระดานผู้นำ!</p>
   <input id="nameInput" placeholder="ชื่อของเธอ" maxlength="20">
   <input id="codeInput" placeholder="รหัสห้อง (ครูให้)" maxlength="20">
   <button onclick="doJoin()">▶ เข้าตลาด</button>
   <div class="msg" id="loginMsg"></div>
 </div>
 
+<div id="app">
+<div class="topbar" style="display:none" id="topbar">
+  <h1><span id="myAvatarLabel">🏮</span> <span id="gameNameLabel">ตลาดนัดนักเรียน</span></h1>
+  <div class="stats">
+    <div class="timer" id="timerBox">⏳ --:--</div>
+    <div class="cash">💰 <span id="cashLabel">0</span></div>
+  </div>
+</div>
+
 <main id="main">
-  <div id="gameOverBox" class="gameover" style="display:none">
-    <h2>🏁 จบเกมแล้ว!</h2>
-    <p>ดูอันดับสุดท้ายของทุกคนได้ที่ปุ่ม "อันดับ" ด้านล่าง</p>
-  </div>
-  <div id="dashHint">
-    <div class="hint-card">👆 แตะปุ่ม <b>ขายของ</b> เพื่อจัดการร้านค้า หรือ <b>ซื้อของ</b> เพื่อช้อปจากซัพพลายเออร์และเพื่อน ๆ</div>
-  </div>
-</main>
 
-<!-- ===================== SELL PANEL ===================== -->
-<div class="panel-overlay" id="sellPanelOverlay">
-  <div class="panel-box">
-    <div class="panel-header sell">
-      <h3>🏪 หน้าขายของ</h3>
-      <div class="panel-header-right">
-        <div class="pill cash">🪙 <span class="js-cash">0</span></div>
-        <button class="panel-close" onclick="closeSellPanel()">✕</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div class="panel-side sell">
-        <div class="side-btn active sell-active" data-tab="shop" onclick="switchSellTab('shop')"><span class="ico">🏪</span>ร้านค้า</div>
-        <div class="side-btn" data-tab="products" onclick="switchSellTab('products')"><span class="ico">📦</span>สินค้า</div>
-        <div class="side-btn" data-tab="orders" onclick="switchSellTab('orders')"><span class="ico">📋</span>ออเดอร์</div>
-        <div class="side-btn" data-tab="finance" onclick="switchSellTab('finance')"><span class="ico">🪙</span>การเงิน</div>
-        <div class="side-btn" data-tab="settings" onclick="switchSellTab('settings')"><span class="ico">⚙️</span>ตั้งค่า</div>
-      </div>
-      <div class="panel-main" id="sellMain">
-        <!-- ร้านค้า -->
-        <div class="sell-tab-content" data-tab="shop">
-          <div class="panel-section-title">🏪 ร้านค้าของฉัน</div>
-          <div id="shopBox"></div>
-        </div>
-        <!-- สินค้า -->
-        <div class="sell-tab-content" data-tab="products" style="display:none">
-          <div class="panel-section-title">📦 สินค้าของฉัน</div>
-          <div class="prod-grid" id="myInventory"></div>
-          <div class="panel-section-title" style="margin-top:16px">🏭 เพิ่มสินค้าจากซัพพลายเออร์</div>
-          <div class="prod-grid" id="supplierListSell"></div>
-        </div>
-        <!-- ออเดอร์ -->
-        <div class="sell-tab-content" data-tab="orders" style="display:none">
-          <div class="panel-section-title">📋 ของที่ฉันวางขายอยู่</div>
-          <div id="myListings"></div>
-        </div>
-        <!-- การเงิน -->
-        <div class="sell-tab-content" data-tab="finance" style="display:none">
-          <div class="panel-section-title">🪙 สรุปการเงิน</div>
-          <div class="finance-grid">
-            <div class="finance-card"><div class="fv" id="finCash">0</div><div class="fl">เงินสด (บ.)</div></div>
-            <div class="finance-card"><div class="fv" id="finInvValue">0</div><div class="fl">มูลค่าสต๊อก (บ.)</div></div>
-            <div class="finance-card"><div class="fv" id="finListCount">0</div><div class="fl">รายการวางขาย</div></div>
-            <div class="finance-card"><div class="fv" id="finListValue">0</div><div class="fl">มูลค่าที่วางขาย (บ.)</div></div>
-          </div>
-        </div>
-        <!-- ตั้งค่า -->
-        <div class="sell-tab-content" data-tab="settings" style="display:none">
-          <div class="panel-section-title">⚙️ ตั้งค่า</div>
-          <div class="settings-row"><span id="settingsPlayerName">ผู้เล่น</span><button class="btn-logout" onclick="doLogout()">ออกจากระบบ</button></div>
-          <div class="empty" style="grid-column:auto">ตั้งค่าเพิ่มเติมให้คุณครูจัดการได้จากแดชบอร์ดคุณครู</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel-footer">
-      <span id="sellFooterOrders">รายการวางขาย: 0</span>
-      <span id="sellFooterRevenue">มูลค่าที่วางขาย: ฿0</span>
-    </div>
-  </div>
+<div id="gameOverBox" class="gameover" style="display:none">
+  <h2>🏁 จบเกมแล้ว!</h2>
+  <p>ดูอันดับสุดท้ายของทุกคนได้ด้านล่าง</p>
 </div>
 
-<!-- ===================== BUY PANEL ===================== -->
-<div class="panel-overlay" id="buyPanelOverlay">
-  <div class="panel-box">
-    <div class="panel-header buy">
-      <h3>🛒 หน้าซื้อของ</h3>
-      <div class="panel-header-right">
-        <div class="pill cash">🪙 <span class="js-cash">0</span></div>
-        <button class="panel-close" onclick="closeBuyPanel()">✕</button>
-      </div>
+<div class="grid">
+  <div>
+    <div class="card">
+      <h3>🏭 ซื้อจากซัพพลายเออร์กลาง (ราคาขยับตลอดเวลา)</h3>
+      <div id="supplierList"></div>
     </div>
-    <div class="panel-body">
-      <div class="panel-side buy">
-        <div class="cat-list">
-          <div class="side-btn active buy-active" data-cat="all" onclick="switchBuyCat('all')"><span class="ico">⭐</span>ทั้งหมด</div>
-          <div class="side-btn" data-cat="supplier" onclick="switchBuyCat('supplier')"><span class="ico">🏭</span>ซัพพลายเออร์</div>
-          <div class="side-btn" data-cat="market" onclick="switchBuyCat('market')"><span class="ico">🛍️</span>ตลาดกลาง</div>
-        </div>
-      </div>
-      <div class="panel-main buy-bg" id="buyMain">
-        <div class="buy-toolbar">
-          <input class="buy-search" id="buySearchInput" placeholder="🔍 ค้นหาสินค้า..." oninput="onBuySearchChange()">
-          <select class="buy-sort" id="buySortSelect" onchange="onBuySearchChange()">
-            <option value="default">ยอดนิยม</option>
-            <option value="price_asc">ราคาต่ำ-สูง</option>
-            <option value="price_desc">ราคาสูง-ต่ำ</option>
-          </select>
-        </div>
-        <div id="buySupplierSection">
-          <div class="panel-section-title">🏭 ซัพพลายเออร์กลาง (ราคาขยับตลอดเวลา)</div>
-          <div class="prod-grid" id="supplierList"></div>
-        </div>
-        <div id="buyMarketSection" style="margin-top:18px">
-          <div class="panel-section-title">🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount" class="market-shop-count"></span></div>
-          <div id="marketList"></div>
-          <div id="marketMoreBtnBox" class="market-more-box"></div>
-        </div>
-      </div>
+
+    <div class="card">
+      <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount" class="market-shop-count"></span></h3>
+      <div id="marketList" class="stall-grid"></div>
+      <div id="marketMoreBtnBox" class="market-more-box"></div>
     </div>
   </div>
-</div>
 
-<!-- ===================== LEADERBOARD MODAL ===================== -->
-<div class="panel-overlay" id="lbPanelOverlay">
-  <div class="panel-box" style="max-width:420px">
-    <div class="panel-header" style="background:linear-gradient(180deg,#ffe27a,var(--gold));color:var(--ink);">
+  <div>
+    <div class="card">
+      <h3>🚚 รถขายของของฉัน</h3>
+      <div id="shopBox"></div>
+    </div>
+
+    <div class="card">
+      <h3>🎒 สต๊อกของฉัน</h3>
+      <div id="myInventory"></div>
+    </div>
+
+    <div class="card">
+      <h3>🏷️ ของที่ฉันวางขายอยู่</h3>
+      <div id="myListings"></div>
+    </div>
+
+    <div class="card">
       <h3>🏆 กระดานผู้นำ</h3>
-      <div class="panel-header-right"><button class="panel-close" onclick="closeLeaderboard()">✕</button></div>
+      <div id="leaderboard"></div>
     </div>
-    <div class="panel-main" style="max-height:60vh" id="leaderboard"></div>
   </div>
+</div>
+
+</main>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- ===================== SHOP SETUP MODAL ===================== -->
 <div class="modal-overlay" id="shopModalOverlay">
   <div class="modal-panel">
     <div class="modal-header">
@@ -594,20 +466,11 @@
     <div class="modal-field-label">คำโปรยร้าน (ไม่บังคับ)</div>
     <input class="shop-name-input" id="shopModalTaglineInput" maxlength="40" placeholder="เช่น สดใหม่ทุกวัน ราคาเป็นกันเอง">
 
-    <div class="modal-field-label">ธีมร้านค้า</div>
+    <div class="modal-field-label">ธีมรถขายของ</div>
     <div class="shop-setup-styles" id="shopModalStyles"></div>
 
-    <button class="btn-shop" id="shopModalSubmitBtn" onclick="submitShopModal()"></button>
+    <button class="btn btn-shop" id="shopModalSubmitBtn" onclick="submitShopModal()"></button>
   </div>
-</div>
-
-<!-- ===================== BOTTOM NAV ===================== -->
-<div class="bottom-nav">
-  <div class="piggy-badge">🐷</div>
-  <button class="nav-btn" onclick="comingSoon()"><span class="ico">🏆</span>ภารกิจ</button>
-  <button class="nav-btn" onclick="comingSoon()"><span class="ico">🎁</span>กิจกรรม</button>
-  <button class="nav-btn" onclick="openLeaderboard()"><span class="ico">📊</span>อันดับ</button>
-  <button class="nav-btn" onclick="comingSoon()"><span class="ico">🛡️</span>ความสำเร็จ</button>
 </div>
 
 <script>
@@ -619,7 +482,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwCQ34YaLFyu1almvgGEU1s
 let studentId = localStorage.getItem('marketStudentId') || null;
 let pollTimer = null;
 let latestSupplier = [];
-let lastState = null;
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -627,7 +489,6 @@ function showToast(msg){
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
 }
-function comingSoon(){ showToast('ฟีเจอร์นี้กำลังจะมาเร็ว ๆ นี้ 🚧'); }
 
 async function api(action, payload){
   // กันหน้าเว็บ "ค้าง" ถ้าเซิร์ฟเวอร์ไม่ตอบกลับเลย (เช่น Apps Script ช้าตอนมีคนเล่นพร้อมกันเยอะ)
@@ -643,6 +504,8 @@ async function api(action, payload){
     try {
       data = await res.json();
     } catch (parseErr) {
+      // เซิร์ฟเวอร์ตอบกลับมาไม่ใช่ JSON (เช่น หน้า error ของ Google) — อย่าปล่อยให้ throw ค้าง
+      // networkError:true ใช้แยกจาก error จริงของเกม (เช่น "ไม่พบผู้เล่น") กันไม่ให้ fetchState() เข้าใจผิดว่า session หมดอายุแล้วเตะออกจากเกม
       return { error: 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', networkError: true };
     }
     return data;
@@ -658,7 +521,7 @@ async function api(action, payload){
 
 async function goTeacher(){
   const key = prompt('กรอกรหัสครู (Teacher Key) เพื่อเข้าสู่แดชบอร์ดคุณครู');
-  if(key === null) return;
+  if(key === null) return; // กดยกเลิก
   const trimmed = key.trim();
   if(!trimmed){ showToast('กรุณากรอกรหัสครู'); return; }
   showToast('กำลังตรวจสอบรหัส...');
@@ -666,14 +529,6 @@ async function goTeacher(){
   if(r.error){ showToast('รหัสไม่ถูกต้อง'); return; }
   sessionStorage.setItem('marketTeacherKey', trimmed);
   window.location.href = 'teacher.html';
-}
-
-function enterGameUi(){
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('heroStats').style.display = 'flex';
-  document.getElementById('heroCta').style.display = 'flex';
-  document.getElementById('main').classList.add('show');
-  document.querySelector('.teacher-btn').style.display = 'none';
 }
 
 async function doJoin(){
@@ -686,13 +541,11 @@ async function doJoin(){
   if(r.error){ msg.textContent = r.error; return; }
   studentId = r.studentId;
   localStorage.setItem('marketStudentId', studentId);
-  enterGameUi();
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('main').classList.add('show');
+  document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
   startPolling();
-}
-
-function doLogout(){
-  localStorage.removeItem('marketStudentId');
-  window.location.reload();
 }
 
 function startPolling(){
@@ -704,15 +557,19 @@ async function fetchState(){
   if(!studentId) return;
   const s = await api('state', { studentId });
   if(s.error){
-    if (s.networkError) { showToast(s.error); return; }
+    // เน็ตสะดุด/เซิร์ฟเวอร์ตอบช้าชั่วคราว -> แค่แจ้งเตือน ไม่ควรเตะออกจากเกม รอบ polling ถัดไปจะลองใหม่เอง
+    if (s.networkError) {
+      showToast(s.error);
+      return;
+    }
+    // error จริงจากเซิร์ฟเวอร์ (เช่น "ไม่พบผู้เล่น กรุณาเข้าเกมใหม่") ถึงจะเตะออกจากเกม
     showToast(s.error);
     localStorage.removeItem('marketStudentId');
     clearInterval(pollTimer);
     document.getElementById('login').style.display='block';
-    document.getElementById('heroStats').style.display='none';
-    document.getElementById('heroCta').style.display='none';
+    document.getElementById('topbar').style.display='none';
     document.getElementById('main').classList.remove('show');
-    document.querySelector('.teacher-btn').style.display = '';
+    document.querySelector('.teacher-access').style.display = '';
     return;
   }
   render(s);
@@ -724,15 +581,10 @@ function fmtTime(sec){
   return `⏳ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function updateCashDisplays(cash){
-  document.querySelectorAll('.js-cash').forEach(el => el.textContent = Math.round(cash).toLocaleString());
-}
-
 function render(s){
-  lastState = s;
-  document.getElementById('heroEyebrow').textContent = s.gameName || 'เกม';
-  document.getElementById('settingsPlayerName').textContent = '👤 ' + s.student.name;
-  updateCashDisplays(s.student.cash);
+  document.getElementById('gameNameLabel').textContent = s.gameName;
+  document.getElementById('myAvatarLabel').textContent = vendorEmoji(s.student.name);
+  document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
   const timerBox = document.getElementById('timerBox');
   timerBox.textContent = fmtTime(s.timeLeftSeconds);
   timerBox.classList.toggle('low', s.timeLeftSeconds !== null && s.timeLeftSeconds < 60);
@@ -749,82 +601,20 @@ function render(s){
   renderInventory(s.inventory, s.gameEnded, s.myShop && s.myShop.opened);
   renderMyListings(s.myListings, s.gameEnded);
   renderLeaderboard(s.leaderboard, s.student.name);
-  renderFinance(s);
-}
-
-function renderFinance(s){
-  const invValue = (s.inventory||[]).reduce((sum,i)=> sum + (i.qty * i.avgCost), 0);
-  const listCount = (s.myListings||[]).length;
-  const listValue = (s.myListings||[]).reduce((sum,l)=> sum + (l.qty * l.price), 0);
-  document.getElementById('finCash').textContent = Math.round(s.student.cash).toLocaleString();
-  document.getElementById('finInvValue').textContent = Math.round(invValue).toLocaleString();
-  document.getElementById('finListCount').textContent = listCount;
-  document.getElementById('finListValue').textContent = Math.round(listValue).toLocaleString();
-  document.getElementById('sellFooterOrders').textContent = `รายการวางขาย: ${listCount}`;
-  document.getElementById('sellFooterRevenue').textContent = `มูลค่าที่วางขาย: ฿${Math.round(listValue).toLocaleString()}`;
 }
 
 let truckStyles = [];
 let truckCost = 0;
 let myShop = { opened: false, name: '', styleId: null, tagline: '' };
-let shopModalStyleId = null;
+let shopModalStyleId = null; // สไตล์ที่เลือกไว้ชั่วคราวในหน้าต่างจัดการร้าน
 
 function styleById(id){ return truckStyles.find(t => t.id === id) || truckStyles[0] || {id:'red',label:'',emoji:'🚚',colorA:'#d1453a',colorB:'#f7ded9'}; }
-function escapeAttr(str){ return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-// ---------- SELL PANEL open/close/tabs ----------
-function openSellPanel(){
-  document.getElementById('sellPanelOverlay').classList.add('show');
-}
-function closeSellPanel(){
-  document.getElementById('sellPanelOverlay').classList.remove('show');
-}
-function switchSellTab(tab){
-  document.querySelectorAll('#sellMain .sell-tab-content').forEach(el => {
-    el.style.display = (el.dataset.tab === tab) ? '' : 'none';
-  });
-  document.querySelectorAll('.panel-side.sell .side-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tab);
-    b.classList.toggle('sell-active', b.dataset.tab === tab);
-  });
-}
-document.getElementById('sellPanelOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'sellPanelOverlay') closeSellPanel();
-});
-
-// ---------- BUY PANEL open/close/category/search ----------
-let buyActiveCat = 'all';
-function openBuyPanel(){
-  document.getElementById('buyPanelOverlay').classList.add('show');
-}
-function closeBuyPanel(){
-  document.getElementById('buyPanelOverlay').classList.remove('show');
-}
-function switchBuyCat(cat){
-  buyActiveCat = cat;
-  document.querySelectorAll('.panel-side.buy .side-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.cat === cat);
-    b.classList.toggle('buy-active', b.dataset.cat === cat);
-  });
-  document.getElementById('buySupplierSection').style.display = (cat === 'all' || cat === 'supplier') ? '' : 'none';
-  document.getElementById('buyMarketSection').style.display = (cat === 'all' || cat === 'market') ? '' : 'none';
-}
-document.getElementById('buyPanelOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'buyPanelOverlay') closeBuyPanel();
-});
-function onBuySearchChange(){
-  renderSupplier(latestSupplier);
-  renderMarketGrid();
+function escapeAttr(str){
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 }
 
-// ---------- LEADERBOARD ----------
-function openLeaderboard(){ document.getElementById('lbPanelOverlay').classList.add('show'); }
-function closeLeaderboard(){ document.getElementById('lbPanelOverlay').classList.remove('show'); }
-document.getElementById('lbPanelOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'lbPanelOverlay') closeLeaderboard();
-});
-
-// การ์ดสรุปในแท็บ "ร้านค้า" — ทางเข้าไปหน้าต่างจัดการร้าน (ป๊อปอัพ)
+// การ์ดสรุปในแถบข้าง เป็นแค่ทางเข้าไปหน้าต่างจัดการร้าน (ป๊อปอัพ) — ไม่มีฟอร์มฝังอยู่ในนี้แล้ว
 function renderShop(shop, cost, styles){
   const el = document.getElementById('shopBox');
   if(!shop) return;
@@ -840,12 +630,12 @@ function renderShop(shop, cost, styles){
           <div class="shop-summary-tag">ธีม: ${st.label}</div>
         </div>
       </div>
-      <button class="btn-edit-shop" onclick="openShopModal()">🎨 จัดการ/ตกแต่งร้านค้า</button>
+      <button class="btn btn-edit-shop" style="margin-top:10px;width:100%" onclick="openShopModal()">🎨 จัดการ/ตกแต่งร้านค้า</button>
     `;
   } else {
     el.innerHTML = `
-      <p style="font-size:0.82rem;color:var(--ink-soft);margin:0 0 4px">ยังไม่มีร้านค้า — ต้องเปิดร้านก่อน ถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>
-      <button class="btn-shop" onclick="openShopModal()">🚚 เปิดร้านค้า</button>
+      <p style="font-size:0.82rem;color:var(--paper-dim);margin:0 0 10px">ยังไม่มีรถขายของ — ต้องเปิดร้านก่อน ถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>
+      <button class="btn btn-shop" style="width:100%" onclick="openShopModal()">🚚 เปิดร้านค้า</button>
     `;
   }
 }
@@ -856,8 +646,8 @@ function openShopModal(){
 
   document.getElementById('shopModalTitle').textContent = myShop.opened ? '🎨 จัดการ/ตกแต่งร้านค้า' : '🚚 เปิดร้านค้า';
   document.getElementById('shopModalIntro').textContent = myShop.opened
-    ? 'แก้ไขชื่อร้าน คำโปรยร้าน และธีมร้านค้าได้ฟรี'
-    : `ต้องมีร้านค้าก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${truckCost} บ.)`;
+    ? 'แก้ไขชื่อร้าน คำโปรยร้าน และธีมรถขายของได้ฟรี'
+    : `ต้องมีรถขายของก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${truckCost} บ.)`;
   document.getElementById('shopModalNameInput').value = myShop.opened ? (myShop.name || '') : '';
   document.getElementById('shopModalTaglineInput').value = myShop.opened ? (myShop.tagline || '') : '';
   document.getElementById('shopModalSubmitBtn').textContent = myShop.opened ? '💾 บันทึกการแก้ไข' : `🚚 เปิดร้าน (เสียเงิน ${truckCost} บ.)`;
@@ -865,9 +655,11 @@ function openShopModal(){
   renderShopModalStyles();
   document.getElementById('shopModalOverlay').classList.add('show');
 }
+
 function closeShopModal(){
   document.getElementById('shopModalOverlay').classList.remove('show');
 }
+
 function renderShopModalStyles(){
   const el = document.getElementById('shopModalStyles');
   el.innerHTML = truckStyles.map(st => `
@@ -877,10 +669,12 @@ function renderShopModalStyles(){
     </div>
   `).join('');
 }
+
 function selectModalStyle(id){
   shopModalStyleId = id;
   renderShopModalStyles();
 }
+
 async function submitShopModal(){
   const shopName = document.getElementById('shopModalNameInput').value.trim();
   const tagline = document.getElementById('shopModalTaglineInput').value.trim();
@@ -895,9 +689,20 @@ async function submitShopModal(){
   const action = myShop.opened ? 'updateShop' : 'openShop';
   try {
     const r = await api(action, { studentId, shopName, tagline, styleId: shopModalStyleId });
-    if(r.error){ showToast(r.error); return; }
+
+    if(r.error){
+      showToast(r.error);
+      return; // finally ด้านล่างจะปลดล็อกปุ่มให้เสมอ
+    }
+
     showToast(myShop.opened ? 'บันทึกร้านค้าแล้ว' : 'เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
-    try { await fetchState(); } catch (stateErr) {}
+    // การเปิด/แก้ไขร้านสำเร็จแล้วฝั่งเซิร์ฟเวอร์ ณ จุดนี้
+    // ถ้า fetchState() ถัดไปมีปัญหา (เน็ตสะดุด ฯลฯ) ก็ไม่ควรทำให้ modal ค้าง จึงครอบด้วย try/catch แยก
+    try {
+      await fetchState();
+    } catch (stateErr) {
+      // ไม่เป็นไร ข้อมูลจะถูกดึงใหม่รอบ polling ถัดไปอยู่แล้ว
+    }
     closeShopModal();
   } catch (err) {
     showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
@@ -906,17 +711,24 @@ async function submitShopModal(){
     btn.textContent = originalLabel;
   }
 }
+
+// ปิดป๊อปอัพเมื่อคลิกพื้นหลังมืดรอบนอกกล่อง
 document.getElementById('shopModalOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'shopModalOverlay') closeShopModal();
 });
 
+
 let itemEmojiMap = {};
 function itemEmoji(name){ return itemEmojiMap[name] || '📦'; }
 
+// เซตอินเนอร์ HTML ใหม่ โดยไม่ทำให้ตัวเลขที่ผู้เล่นพิมพ์ค้างอยู่ในช่อง input หายไป
+// (ปัญหาเดิม: renderState ทำงานทุก 3 วิ แล้วเขียนทับ input ทั้งหมดด้วยค่าเริ่มต้น)
 function setHtmlPreserveInputs(el, html){
   const inputs = el.querySelectorAll('input[id]');
   const saved = {};
-  inputs.forEach(inp => { saved[inp.id] = { value: inp.value, focused: document.activeElement === inp }; });
+  inputs.forEach(inp => {
+    saved[inp.id] = { value: inp.value, focused: document.activeElement === inp };
+  });
   el.innerHTML = html;
   Object.keys(saved).forEach(id => {
     const ni = document.getElementById(id);
@@ -926,49 +738,22 @@ function setHtmlPreserveInputs(el, html){
   });
 }
 
-function filterSortItems(items, nameKey, priceKey){
-  const q = (document.getElementById('buySearchInput')?.value || '').trim().toLowerCase();
-  const sortMode = document.getElementById('buySortSelect')?.value || 'default';
-  let list = items;
-  if(q) list = list.filter(it => String(it[nameKey]).toLowerCase().includes(q));
-  if(sortMode === 'price_asc') list = [...list].sort((a,b)=> a[priceKey]-b[priceKey]);
-  if(sortMode === 'price_desc') list = [...list].sort((a,b)=> b[priceKey]-a[priceKey]);
-  return list;
-}
-
 function renderSupplier(items){
   items.forEach(it => itemEmojiMap[it.itemName] = it.emoji || '📦');
-
-  // การ์ดในแท็บ "ซื้อของ" (มีค้นหา/เรียงลำดับ)
-  const filtered = filterSortItems(items, 'itemName', 'price');
-  const buyHtml = filtered.map(it => `
-    <div class="prod-card">
-      <div class="prod-emoji">${it.emoji||'📦'}</div>
-      <div class="prod-name">${it.itemName}</div>
-      <div class="prod-price">${it.price} บ.</div>
-      <div class="prod-inputs">
-        <input class="prod-input" type="number" min="1" value="1" id="buyqty_${it.itemName}">
-      </div>
-      <button class="prod-btn buy" onclick="buySupplier('${it.itemName}', this)">🛒 ซื้อ</button>
-    </div>
-  `).join('') || '<div class="empty">ไม่พบสินค้าที่ค้นหา</div>';
-  setHtmlPreserveInputs(document.getElementById('supplierList'), buyHtml);
-
-  // การ์ดในแท็บ "สินค้า" ของหน้าขายของ (เพิ่มสต๊อกจากซัพพลายเออร์ ไม่มีค้นหา)
-  const sellHtml = items.map(it => `
-    <div class="prod-card">
-      <div class="prod-emoji">${it.emoji||'📦'}</div>
-      <div class="prod-name">${it.itemName}</div>
-      <div class="prod-price">${it.price} บ.</div>
-      <div class="prod-inputs">
-        <input class="prod-input" type="number" min="1" value="1" id="buyqty2_${it.itemName}">
-      </div>
-      <button class="prod-btn sell" onclick="buySupplierFromSell('${it.itemName}', this)">+ เพิ่มสต๊อก</button>
+  const el = document.getElementById('supplierList');
+  const html = items.map(it => `
+    <div class="item-row">
+      <div class="emoji">${it.emoji||'📦'}</div>
+      <div class="item-name">${it.itemName}</div>
+      <div class="item-price price-tag">${it.price} บ.</div>
+      <input class="qty-input" type="number" min="1" value="1" id="buyqty_${it.itemName}">
+      <button class="btn btn-buy" onclick="buySupplier('${it.itemName}', this)">ซื้อ</button>
     </div>
   `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
-  setHtmlPreserveInputs(document.getElementById('supplierListSell'), sellHtml);
+  setHtmlPreserveInputs(el, html);
 }
 
+// อวตาร์แม่ค้า/พ่อค้า สุ่มแบบ deterministic ตามชื่อ (คนเดิมได้อวตาร์เดิมเสมอ)
 const VENDOR_EMOJIS = ['🧕','👩‍🌾','👨‍🌾','🧑‍🍳','👩‍🍳','👨‍🍳','🧔','👵','👴','🙋‍♀️','🙋‍♂️','👩‍🦱','👨‍🦱','🧑‍🦳','👩‍🦳'];
 const AWNING_PALETTES = [
   ['#d1453a','#f4ecd8'], ['#2f8f6f','#f4ecd8'], ['#c94f8a','#f4ecd8'],
@@ -987,20 +772,20 @@ const MARKET_PAGE_SIZE = 6;
 let marketExpanded = false;
 let lastMarketShops = null;
 let lastMarketEnded = false;
-let lastMarketListingsRaw = [];
 
 function renderMarket(listings, ended){
+  const el = document.getElementById('marketList');
   lastMarketEnded = ended;
-  lastMarketListingsRaw = listings || [];
 
   if(!listings.length){
-    document.getElementById('marketList').innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>';
+    el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>';
     lastMarketShops = null;
     document.getElementById('marketShopCount').textContent = '';
     document.getElementById('marketMoreBtnBox').innerHTML = '';
     return;
   }
 
+  // จัดกลุ่มของตามคนขาย ให้แต่ละคนมีรถขายของเป็นของตัวเอง
   const bySeller = {};
   listings.forEach(l => {
     const key = l.sellerId || l.sellerName;
@@ -1018,56 +803,55 @@ function renderMarketGrid(){
   const btnBox = document.getElementById('marketMoreBtnBox');
   if(!lastMarketShops){ return; }
 
-  const q = (document.getElementById('buySearchInput')?.value || '').trim().toLowerCase();
-  let shopsFiltered = lastMarketShops;
-  if(q){
-    shopsFiltered = lastMarketShops
-      .map(s => ({ ...s, goods: s.goods.filter(g => g.itemName.toLowerCase().includes(q)) }))
-      .filter(s => s.goods.length > 0);
-  }
-
-  const total = shopsFiltered.length;
-  const shownShops = marketExpanded ? shopsFiltered : shopsFiltered.slice(0, MARKET_PAGE_SIZE);
+  const total = lastMarketShops.length;
+  const shownShops = marketExpanded ? lastMarketShops : lastMarketShops.slice(0, MARKET_PAGE_SIZE);
 
   const html = shownShops.map(({sellerName, shopName, styleId, shopTagline, goods}) => {
     const st = styleId ? styleById(styleId) : null;
     const emoji = st ? st.emoji : vendorEmoji(sellerName);
+    const colorA = st ? st.colorA : vendorPalette(sellerName)[0];
+    const colorB = st ? st.colorB : '#ffe9c7';
     const displayName = shopName || ('แผง' + sellerName);
 
     const goodsHtml = goods.map(l => `
-      <div class="prod-card">
-        <div class="prod-emoji">${itemEmoji(l.itemName)}</div>
-        <div class="prod-name">${l.itemName}</div>
-        <div class="prod-qty">เหลือ ${l.qty}</div>
-        <div class="prod-price">${l.price} บ.</div>
-        <div class="prod-inputs">
-          <input class="prod-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
+      <div class="truck-good">
+        <div class="truck-good-top">
+          <div class="truck-good-emoji">${itemEmoji(l.itemName)}</div>
+          <div class="truck-good-name">${l.itemName}</div>
+          <div class="truck-tag" style="color:var(--paper-dim)">เหลือ ${l.qty}</div>
+          <div class="truck-good-price price-tag">${l.price} บ.</div>
         </div>
-        <button class="prod-btn buy" ${lastMarketEnded?'disabled':''} onclick="buyListing('${l.id}', this)">🛒 ซื้อ</button>
+        <div class="truck-good-controls">
+          <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
+          <button class="btn btn-buy" ${lastMarketEnded?'disabled':''} onclick="buyListing('${l.id}', this)">ซื้อ</button>
+        </div>
       </div>
     `).join('');
     return `
-      <div class="shop-block">
-        <div class="shop-block-head">
-          <div class="shop-block-emoji">${emoji}</div>
+      <div class="truck" style="--truck-a:${colorA};--truck-b:${colorB}">
+        <div class="truck-header">
+          <div class="truck-emoji-badge">${emoji}</div>
           <div>
-            <div class="shop-block-name">${displayName}</div>
-            <div class="shop-block-tag">โดย ${sellerName} · ${goods.length} รายการ</div>
+            <div class="truck-name">${displayName}</div>
+            <div class="truck-tag">โดย ${sellerName} · ${goods.length} รายการ</div>
           </div>
         </div>
-        ${shopTagline ? `<div class="shop-block-tagline">“${shopTagline}”</div>` : ''}
-        <div class="shop-block-goods">${goodsHtml}</div>
+        ${shopTagline ? `<div class="truck-tagline">“${shopTagline}”</div>` : ''}
+        <div class="truck-window">
+          <div class="truck-goods">${goodsHtml}</div>
+        </div>
+        <div class="truck-counter"></div>
       </div>
     `;
-  }).join('') || '<div class="empty">ไม่พบสินค้าที่ค้นหา</div>';
+  }).join('');
   setHtmlPreserveInputs(el, html);
 
   if(total <= MARKET_PAGE_SIZE){
     btnBox.innerHTML = '';
   } else if(marketExpanded){
-    btnBox.innerHTML = `<button type="button" class="btn-market-more" onclick="toggleMarketExpand()">▲ ย่อรายการ</button>`;
+    btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">▲ ย่อรายการ</button>`;
   } else {
-    btnBox.innerHTML = `<button type="button" class="btn-market-more" onclick="toggleMarketExpand()">🔽 ดูร้านค้าทั้งหมด (อีก ${total - MARKET_PAGE_SIZE} ร้าน)</button>`;
+    btnBox.innerHTML = `<button type="button" class="btn btn-market-more" onclick="toggleMarketExpand()">🔽 ดูร้านค้าทั้งหมด (อีก ${total - MARKET_PAGE_SIZE} ร้าน)</button>`;
   }
 }
 
@@ -1078,18 +862,14 @@ function toggleMarketExpand(){
 
 function renderInventory(inv, ended, shopOpened){
   const el = document.getElementById('myInventory');
-  if(!inv.length){ el.innerHTML = '<div class="empty">ยังไม่มีของในสต๊อก ลองซื้อจากซัพพลายเออร์ด้านล่างดูสิ</div>'; return; }
-  const hint = !shopOpened ? `<div class="empty">🚚 เปิดร้านก่อน ถึงจะวางขายในตลาดกลางได้ (ดูแท็บ "ร้านค้า")</div>` : '';
+  if(!inv.length){ el.innerHTML = '<div class="empty">ยังไม่มีของในสต๊อก ลองซื้อจากซัพพลายเออร์ดูสิ</div>'; return; }
+  const hint = !shopOpened ? `<div class="empty" style="margin-bottom:8px">🚚 เปิดร้านรถขายของก่อน ถึงจะวางขายในตลาดกลางได้ (ดูการ์ดด้านบน)</div>` : '';
   const html = hint + inv.map(i => `
-    <div class="prod-card">
-      <div class="prod-emoji">${itemEmoji(i.itemName)}</div>
-      <div class="prod-name">${i.itemName}</div>
-      <div class="prod-qty">มี x${i.qty} · ทุนเฉลี่ย ${i.avgCost} บ.</div>
-      <div class="prod-inputs">
-        <input class="prod-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
-        <input class="prod-input wide" type="number" min="1" placeholder="ราคา" id="sellprice_${i.itemName}">
-      </div>
-      <button class="prod-btn sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}', this)">🏷️ วางขาย</button>
+    <div class="inv-item">
+      <div class="item-name">${i.itemName} x${i.qty}<br><span class="inv-cost">ต้นทุนเฉลี่ย ${i.avgCost} บ./ชิ้น</span></div>
+      <input class="qty-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
+      <input class="price-input" type="number" min="1" placeholder="ราคาขาย" id="sellprice_${i.itemName}">
+      <button class="btn btn-sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}', this)">วางขาย</button>
     </div>
   `).join('');
   setHtmlPreserveInputs(el, html);
@@ -1099,11 +879,10 @@ function renderMyListings(listings, ended){
   const el = document.getElementById('myListings');
   if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีของวางขาย</div>'; return; }
   el.innerHTML = listings.map(l => `
-    <div class="order-row">
-      <div class="emoji">${itemEmoji(l.itemName)}</div>
+    <div class="item-row">
       <div class="item-name">${l.itemName} x${l.qty}</div>
-      <div class="prod-price">${l.price} บ.</div>
-      <button class="prod-btn cancel" style="width:auto;padding:8px 12px" ${ended?'disabled':''} onclick="cancelListing('${l.id}', this)">ยกเลิก</button>
+      <div class="price-tag">${l.price} บ.</div>
+      <button class="btn btn-cancel" ${ended?'disabled':''} onclick="cancelListing('${l.id}', this)">ยกเลิก</button>
     </div>
   `).join('');
 }
@@ -1119,7 +898,7 @@ function renderLeaderboard(list, myName){
       <div class="lb-name">${p.name}</div>
       <div class="lb-worth">${p.netWorth.toLocaleString()} บ.</div>
     </div>
-  `).join('') || '<div class="empty">ยังไม่มีข้อมูล</div>';
+  `).join('');
 }
 
 async function buySupplier(itemName, btn){
@@ -1129,24 +908,10 @@ async function buySupplier(itemName, btn){
   try {
     const r = await api('buyFromSupplier', { studentId, itemName, qty });
     if(r.error) showToast(r.error); else showToast(`ซื้อ ${itemName} x${qty} สำเร็จ`);
-    await fetchState();
+    await fetchState(); // fetchState สร้าง UI ใหม่ทั้งการ์ด ปุ่มจะถูกแทนที่/ปลดล็อกอัตโนมัติ
   } catch (err) {
     showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = '🛒 ซื้อ'; }
-  }
-}
-
-async function buySupplierFromSell(itemName, btn){
-  const qty = Number(document.getElementById(`buyqty2_${itemName}`).value);
-  if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
-  showToast('กำลังซื้อ...');
-  try {
-    const r = await api('buyFromSupplier', { studentId, itemName, qty });
-    if(r.error) showToast(r.error); else showToast(`เพิ่มสต๊อก ${itemName} x${qty} สำเร็จ`);
-    await fetchState();
-  } catch (err) {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = '+ เพิ่มสต๊อก'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'ซื้อ'; }
   }
 }
 
@@ -1162,7 +927,7 @@ async function listForSale(itemName, btn){
     await fetchState();
   } catch (err) {
     showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = '🏷️ วางขาย'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'วางขาย'; }
   }
 }
 
@@ -1189,13 +954,16 @@ async function buyListing(listingId, btn){
     await fetchState();
   } catch (err) {
     showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
-    if(btn){ btn.disabled = false; btn.textContent = '🛒 ซื้อ'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'ซื้อ'; }
   }
 }
 
 // ถ้าเคยเข้าเกมไปแล้ว (มี studentId ใน localStorage) ให้เข้าเลย
 if(studentId){
-  enterGameUi();
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('main').classList.add('show');
+  document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
   startPolling();
 }
 </script>
