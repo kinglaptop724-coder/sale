@@ -187,10 +187,13 @@
     border: 2px solid var(--line); /* เพิ่มเส้นขอบให้ชัดเจนเข้ากับธีม */
     box-shadow: 2px 2px 0 rgba(0,0,0,0.15); /* เพิ่มมิติด้วยเงา */
   }
+  /* ปรับแถบพลังให้เป็นสีทึบสบายตา และมีขอบปิดท้าย */
   .leaderboard-row .bar{
-    position:absolute;left:0;top:0;bottom:0;
-    background:linear-gradient(90deg, rgba(255,210,63,0.4), transparent);
-    z-index:0;
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #d4eedb; /* สีเขียวพาสเทลอ่อน */
+    border-right: 2px solid var(--line); /* เส้นขอบปิดหลอดพลัง */
+    z-index: 0;
   }
   .rank{width:26px;text-align:center;font-weight:800;color:var(--green-dark);z-index:1;font-size:0.95rem;}
   .lb-name{flex:1;z-index:1;font-weight:600;}
