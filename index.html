@@ -531,6 +531,21 @@
     background: #7abdf4; /* ใช้สีฟ้าให้เข้ากับธีมกล่อง */
     border-radius: 10px;
   }
+  /* บังคับให้หน้าต่างทั้ง 3 คอลัมน์ยืดความสูงเท่ากันเสมอ */
+  .grid {
+    align-items: stretch !important;
+  }
+  
+  /* ทำให้ตัวกล่องรองรับการยืดขยาย */
+  .game-window {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* ดันพื้นที่เนื้อหาและพื้นหลังให้เต็มความสูงที่เหลือ */
+  .window-body {
+    flex: 1 !important;
+  }
 </style>
 </head>
 <body>
