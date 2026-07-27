@@ -107,86 +107,88 @@
   .lb-name{flex:1;}
   .lb-worth{font-weight:700;color:var(--lantern);}
 
-  /* ===== แผงค้า (stalls) แบบแผงลอยจริง ===== */
+  /* ===== รถขายของ (food truck stalls) ===== */
   .stall-grid{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
-    gap:26px 18px;
+    gap:30px 18px;
   }
-  .stall{
+  .truck{
     position:relative;
-    padding-top:8px;
+    padding-top:6px;
+    filter:drop-shadow(0 6px 8px rgba(0,0,0,0.35));
   }
 
-  /* หลังคาผ้าใบลายทางขอบหยัก */
-  .stall-roof{
-    height:34px;
-    background:repeating-linear-gradient(
-      90deg,
-      var(--awning-a) 0 12.5%,
-      var(--awning-b) 12.5% 25%
-    );
-    clip-path: polygon(
-      0% 0%, 100% 0%, 100% 72%,
-      93.75% 72%, 90.6% 100%, 87.5% 72%,
-      81.25% 72%, 78.1% 100%, 75% 72%,
-      68.75% 72%, 65.6% 100%, 62.5% 72%,
-      56.25% 72%, 53.1% 100%, 50% 72%,
-      43.75% 72%, 40.6% 100%, 37.5% 72%,
-      31.25% 72%, 28.1% 100%, 25% 72%,
-      18.75% 72%, 15.6% 100%, 12.5% 72%,
-      6.25% 72%, 3.1% 100%, 0% 72%
-    );
-    box-shadow:0 2px 4px rgba(0,0,0,0.4);
+  /* หลังคารถ + ป้ายชื่อร้าน */
+  .truck-header{
+    display:flex;align-items:center;gap:8px;
+    background:var(--truck-a);
+    filter:brightness(0.95);
+    border-radius:14px 14px 4px 4px;
+    padding:7px 10px;
+    border:1px solid rgba(0,0,0,0.25);
+    border-bottom:none;
   }
-
-  /* เสาไม้สองข้าง */
-  .stall-posts{display:flex;justify-content:space-between;padding:0 10px;height:14px;}
-  .stall-posts::before, .stall-posts::after{
-    content:"";width:6px;height:100%;
-    background:linear-gradient(90deg,#8a5a2e,#b9803f,#8a5a2e);
-    border-radius:2px;
-  }
-
-  /* ป้ายชื่อร้านแขวนกลาง */
-  .stall-sign{
-    display:flex;align-items:center;gap:7px;justify-content:center;
-    background:var(--stall-2);border:1px solid var(--border);
-    border-radius:20px;padding:4px 12px 4px 6px;
-    width:fit-content;margin:2px auto 8px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.3);
-  }
-  .stall-avatar{
-    width:28px;height:28px;border-radius:50%;
-    background:var(--awning-a);
+  .truck-emoji-badge{
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(255,255,255,0.28);
     display:flex;align-items:center;justify-content:center;
-    font-size:0.95rem;border:2px solid rgba(255,255,255,0.25);
+    font-size:1.15rem;border:2px solid rgba(255,255,255,0.45);
     flex-shrink:0;
   }
-  .stall-seller{font-weight:700;font-size:0.82rem;line-height:1.1;}
-  .stall-tag{font-size:0.68rem;color:#9fb8ae;}
+  .truck-name{font-weight:800;font-size:0.85rem;line-height:1.15;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.35);}
+  .truck-tag{font-size:0.68rem;color:rgba(255,255,255,0.8);}
 
-  /* เคาน์เตอร์ไม้ที่วางของขาย */
-  .stall-counter{
-    background:
-      repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 34px),
-      linear-gradient(180deg,#a06a35,#7a4d24);
+  /* หน้าต่างขายของ / เคาน์เตอร์ */
+  .truck-window{
+    background: linear-gradient(180deg, var(--truck-b), #ffffff08), var(--stall-2);
     border:1px solid rgba(0,0,0,0.25);
-    border-radius:8px;
-    padding:12px 10px 10px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 4px 8px rgba(0,0,0,0.35);
+    border-top:none;
+    border-radius:0 0 6px 6px;
+    padding:12px 10px 16px;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.3);
   }
-  .stall-goods{display:flex;flex-direction:column;gap:8px;}
-  .stall-good{
-    background:rgba(16,34,31,0.75);border-radius:8px;padding:8px 9px;
+  .truck-goods{display:flex;flex-direction:column;gap:8px;}
+  .truck-good{
+    background:rgba(16,34,31,0.78);border-radius:8px;padding:8px 9px;
     font-size:0.85rem;border:1px solid rgba(255,255,255,0.08);
   }
-  .stall-good-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-  .stall-good-emoji{font-size:1.4rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));}
-  .stall-good-name{flex:1;font-size:0.82rem;}
-  .stall-good-price{color:var(--lantern);font-weight:700;}
-  .stall-good-controls{display:flex;gap:6px;align-items:center;}
-  .stall-good-controls .qty-input{width:44px;}
-  .stall-empty-note{color:#e8dcc4;font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
+  .truck-good-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .truck-good-emoji{font-size:1.4rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));}
+  .truck-good-name{flex:1;font-size:0.82rem;}
+  .truck-good-price{color:var(--lantern);font-weight:700;}
+  .truck-good-controls{display:flex;gap:6px;align-items:center;}
+  .truck-good-controls .qty-input{width:44px;}
+  .truck-empty-note{color:#e8dcc4;font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
+
+  /* ล้อรถ */
+  .truck-wheels{display:flex;justify-content:space-around;padding:0 22px;margin-top:-9px;position:relative;z-index:2;}
+  .truck-wheel{
+    width:20px;height:20px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #555, #111 70%);
+    border:3px solid #2b2b2b;
+  }
+
+  /* ===== การ์ดตั้ง/แก้ไขร้านค้า ===== */
+  .shop-setup-styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:10px 0;}
+  .style-choice{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:9px 6px;border-radius:10px;cursor:pointer;
+    border:2px solid transparent;background:var(--night);
+    font-size:0.72rem;text-align:center;color:#cfe3db;
+  }
+  .style-choice .swatch-emoji{font-size:1.4rem;}
+  .style-choice.selected{border-color:var(--lantern);background:rgba(242,165,65,0.12);color:var(--paper);}
+  .shop-name-input{
+    width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);
+    background:var(--night);color:var(--paper);font-size:0.95rem;margin-bottom:10px;
+  }
+  .shop-summary{display:flex;align-items:center;gap:12px;}
+  .shop-summary .truck-emoji-badge{width:44px;height:44px;font-size:1.5rem;background:var(--stall-2);border-color:var(--border);}
+  .shop-summary-info{flex:1;}
+  .shop-summary-name{font-weight:700;font-size:1rem;}
+  .shop-summary-tag{font-size:0.78rem;color:#9fb8ae;}
+  .btn-shop{background:linear-gradient(135deg,var(--lantern),var(--lantern-2));color:#241205;width:100%;padding:11px;font-size:0.95rem;}
+  .btn-edit-shop{background:var(--stall-2);border:1px solid var(--border);color:var(--paper);}
 
   .empty{color:#8fa39c;font-size:0.85rem;padding:8px 0;}
   .toast{
@@ -243,6 +245,11 @@
   </div>
 
   <div>
+    <div class="card">
+      <h3>🚚 รถขายของของฉัน</h3>
+      <div id="shopBox"></div>
+    </div>
+
     <div class="card">
       <h3>🎒 สต๊อกของฉัน</h3>
       <div id="myInventory"></div>
@@ -343,11 +350,105 @@ function render(s){
   document.getElementById('gameOverBox').style.display = s.gameEnded ? 'block' : 'none';
 
   latestSupplier = s.supplierItems;
+  truckStyles = s.truckStyles || truckStyles;
+  truckCost = s.truckCost || 0;
+  myShop = s.myShop || myShop;
   renderSupplier(s.supplierItems);
+  renderShop(s.myShop, s.truckCost, s.truckStyles);
   renderMarket(s.market, s.gameEnded);
-  renderInventory(s.inventory, s.gameEnded);
+  renderInventory(s.inventory, s.gameEnded, s.myShop && s.myShop.opened);
   renderMyListings(s.myListings, s.gameEnded);
   renderLeaderboard(s.leaderboard, s.student.name);
+}
+
+let truckStyles = [];
+let truckCost = 0;
+let myShop = { opened: false, name: '', styleId: null };
+let shopFormStyleId = null; // สไตล์ที่เลือกไว้ชั่วคราวในฟอร์ม
+let shopEditing = false;
+
+function styleById(id){ return truckStyles.find(t => t.id === id) || truckStyles[0] || {id:'red',label:'',emoji:'🚚',colorA:'#d1453a',colorB:'#f7ded9'}; }
+
+function renderShop(shop, cost, styles){
+  const el = document.getElementById('shopBox');
+  if(!shop) return;
+
+  if(shop.opened && !shopEditing){
+    const st = styleById(shop.styleId);
+    el.innerHTML = `
+      <div class="shop-summary">
+        <div class="truck-emoji-badge">${st.emoji}</div>
+        <div class="shop-summary-info">
+          <div class="shop-summary-name">${shop.name}</div>
+          <div class="shop-summary-tag">ธีม: ${st.label}</div>
+        </div>
+      </div>
+      <button class="btn btn-edit-shop" style="margin-top:10px;width:100%" onclick="startEditShop()">✏️ แก้ไขร้าน/เปลี่ยนธีม</button>
+    `;
+    return;
+  }
+
+  // ฟอร์มตั้งร้าน (ครั้งแรก) หรือแก้ไขร้าน
+  if(shopFormStyleId === null){
+    shopFormStyleId = shop.opened ? shop.styleId : (styles[0] && styles[0].id);
+  }
+  const intro = shop.opened
+    ? `<p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 6px">แก้ไขชื่อร้าน/ธีมรถได้ฟรี</p>`
+    : `<p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 6px">ต้องมีรถขายของก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>`;
+
+  el.innerHTML = `
+    ${intro}
+    <input class="shop-name-input" id="shopNameInput" maxlength="24" placeholder="ตั้งชื่อร้าน เช่น มะม่วงพี่หนึ่ง" value="${shop.opened ? shop.name : ''}">
+    <div class="shop-setup-styles" id="styleChoices">
+      ${styles.map(st => `
+        <div class="style-choice ${st.id===shopFormStyleId?'selected':''}" onclick="selectShopStyle('${st.id}')">
+          <div class="swatch-emoji">${st.emoji}</div>
+          <div>${st.label}</div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-shop" onclick="${shop.opened ? 'submitUpdateShop()' : 'submitOpenShop()'}">
+      ${shop.opened ? '💾 บันทึกการแก้ไข' : `🚚 เปิดร้าน (เสียเงิน ${cost} บ.)`}
+    </button>
+    ${shop.opened ? `<button class="btn btn-cancel" style="margin-top:8px;width:100%" onclick="cancelEditShop()">ยกเลิก</button>` : ''}
+  `;
+}
+
+function selectShopStyle(id){
+  shopFormStyleId = id;
+  renderShop(myShop, truckCost, truckStyles);
+}
+
+function startEditShop(){
+  shopEditing = true;
+  shopFormStyleId = myShop.styleId;
+  renderShop(myShop, truckCost, truckStyles);
+}
+
+function cancelEditShop(){
+  shopEditing = false;
+  shopFormStyleId = null;
+  renderShop(myShop, truckCost, truckStyles);
+}
+
+async function submitOpenShop(){
+  const shopName = document.getElementById('shopNameInput').value.trim();
+  if(!shopName){ showToast('ตั้งชื่อร้านก่อนนะ'); return; }
+  const r = await api('openShop', { studentId, shopName, styleId: shopFormStyleId });
+  if(r.error){ showToast(r.error); return; }
+  showToast('เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
+  shopFormStyleId = null;
+  fetchState();
+}
+
+async function submitUpdateShop(){
+  const shopName = document.getElementById('shopNameInput').value.trim();
+  const r = await api('updateShop', { studentId, shopName, styleId: shopFormStyleId });
+  if(r.error){ showToast(r.error); return; }
+  showToast('บันทึกร้านค้าแล้ว');
+  shopEditing = false;
+  shopFormStyleId = null;
+  fetchState();
 }
 
 let itemEmojiMap = {};
@@ -386,56 +487,62 @@ function renderMarket(listings, ended){
   const el = document.getElementById('marketList');
   if(!listings.length){ el.innerHTML = '<div class="empty">ยังไม่มีใครวางขาย ลองรอเพื่อนวางของดูนะ</div>'; return; }
 
-  // จัดกลุ่มของตามคนขาย ให้แต่ละคนมีแผงค้าเป็นของตัวเอง
+  // จัดกลุ่มของตามคนขาย ให้แต่ละคนมีรถขายของเป็นของตัวเอง
   const bySeller = {};
   listings.forEach(l => {
-    if(!bySeller[l.sellerName]) bySeller[l.sellerName] = [];
-    bySeller[l.sellerName].push(l);
+    const key = l.sellerId || l.sellerName;
+    if(!bySeller[key]) bySeller[key] = { sellerName: l.sellerName, shopName: l.shopName, styleId: l.styleId, goods: [] };
+    bySeller[key].goods.push(l);
   });
 
-  el.innerHTML = Object.entries(bySeller).map(([sellerName, goods]) => {
-    const [a, b] = vendorPalette(sellerName);
+  el.innerHTML = Object.values(bySeller).map(({sellerName, shopName, styleId, goods}) => {
+    const st = styleId ? styleById(styleId) : null;
+    const emoji = st ? st.emoji : vendorEmoji(sellerName);
+    const colorA = st ? st.colorA : vendorPalette(sellerName)[0];
+    const colorB = st ? st.colorB : '#2a4a42';
+    const displayName = shopName || ('แผง' + sellerName);
+
     const goodsHtml = goods.map(l => `
-      <div class="stall-good">
-        <div class="stall-good-top">
-          <div class="stall-good-emoji">${itemEmoji(l.itemName)}</div>
-          <div class="stall-good-name">${l.itemName} <span class="stall-tag">(เหลือ ${l.qty})</span></div>
-          <div class="stall-good-price">${l.price} บ.</div>
+      <div class="truck-good">
+        <div class="truck-good-top">
+          <div class="truck-good-emoji">${itemEmoji(l.itemName)}</div>
+          <div class="truck-good-name">${l.itemName} <span class="truck-tag" style="color:#9fb8ae">(เหลือ ${l.qty})</span></div>
+          <div class="truck-good-price">${l.price} บ.</div>
         </div>
-        <div class="stall-good-controls">
+        <div class="truck-good-controls">
           <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
           <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}')">ซื้อ</button>
         </div>
       </div>
     `).join('');
     return `
-      <div class="stall" style="--awning-a:${a};--awning-b:${b}">
-        <div class="stall-roof"></div>
-        <div class="stall-posts"></div>
-        <div class="stall-sign">
-          <div class="stall-avatar" style="background:${a}">${vendorEmoji(sellerName)}</div>
+      <div class="truck" style="--truck-a:${colorA};--truck-b:${colorB}">
+        <div class="truck-header">
+          <div class="truck-emoji-badge">${emoji}</div>
           <div>
-            <div class="stall-seller">แผง${sellerName}</div>
-            <div class="stall-tag">${goods.length} รายการ</div>
+            <div class="truck-name">${displayName}</div>
+            <div class="truck-tag">โดย ${sellerName} · ${goods.length} รายการ</div>
           </div>
         </div>
-        <div class="stall-counter">
-          <div class="stall-goods">${goodsHtml}</div>
+        <div class="truck-window">
+          <div class="truck-goods">${goodsHtml}</div>
         </div>
+        <div class="truck-wheels"><div class="truck-wheel"></div><div class="truck-wheel"></div></div>
       </div>
     `;
   }).join('');
 }
 
-function renderInventory(inv, ended){
+function renderInventory(inv, ended, shopOpened){
   const el = document.getElementById('myInventory');
   if(!inv.length){ el.innerHTML = '<div class="empty">ยังไม่มีของในสต๊อก ลองซื้อจากซัพพลายเออร์ดูสิ</div>'; return; }
-  el.innerHTML = inv.map(i => `
+  const hint = !shopOpened ? `<div class="empty" style="margin-bottom:8px">🚚 เปิดร้านรถขายของก่อน ถึงจะวางขายในตลาดกลางได้ (ดูการ์ดด้านบน)</div>` : '';
+  el.innerHTML = hint + inv.map(i => `
     <div class="inv-item">
       <div class="item-name">${i.itemName} x${i.qty}<br><span class="inv-cost">ต้นทุนเฉลี่ย ${i.avgCost} บ./ชิ้น</span></div>
       <input class="qty-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
       <input class="price-input" type="number" min="1" placeholder="ราคาขาย" id="sellprice_${i.itemName}">
-      <button class="btn btn-sell" ${ended?'disabled':''} onclick="listForSale('${i.itemName}')">วางขาย</button>
+      <button class="btn btn-sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}')">วางขาย</button>
     </div>
   `).join('');
 }
