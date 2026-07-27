@@ -322,9 +322,17 @@
   }
   .truck-good-top{
     display:flex;flex-direction:column;align-items:center;
-    gap:6px; /* เพิ่มระยะห่างระหว่าง รูป, ชื่อ, และราคา */
-    margin-bottom:12px;
+    gap:4px; /* ลดระยะห่างส่วนบนให้กระชับขึ้นเล็กน้อย */
+    margin-bottom:8px;
     width: 100%;
+    flex: 1; /* ให้ส่วนนี้ช่วยกระจายพื้นที่ ทำให้ทุกกล่องสูงเท่ากัน */
+  }
+  
+  /* เพิ่มโค้ดส่วนนี้เพื่อจัดระเบียบกล่องราคาในตลาดกลางโดยเฉพาะ */
+  .truck-good .price-tag {
+    width: 100%; /* ขยายกล่องราคาให้กว้าง 100% พอดีกับชุดปุ่มด้านล่าง */
+    margin-top: auto; /* ดันกล่องราคาลงมาให้อยู่ระดับเดียวกันเสมอ แม้ชื่อสินค้าจะยาวไม่เท่ากัน */
+    box-sizing: border-box;
   }
   .truck-good-emoji{
     font-size:2rem;line-height:1;
