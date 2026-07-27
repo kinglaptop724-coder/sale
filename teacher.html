@@ -370,9 +370,8 @@
     <span class="pill" id="statusPill">-</span>
     <span class="pill" id="timerPill">-</span>
     
-    <!-- ปุ่มประมูลสำหรับครู -->
-    <button class="btn" style="background:#ffd23f; color:#2c1c0d; border-color:#2c1c0d;" onclick="startAuction()">🎁 สุ่มเปิดประมูล</button>
-    <button class="btn btn-end" onclick="endAuction()">🔨 ปิดประมูล (แจกของ)</button>
+    <!-- บอทประมูลอัตโนมัติ -->
+    <span class="pill" id="autoAucPill" style="background:#ffd23f; color:#2c1c0d; border-color:#2c1c0d; font-weight:bold;">🤖 บอทประมูล: รอเริ่มเกม</span>
     
     <button class="btn btn-start" id="btnStart" onclick="doStart()">▶️ เริ่มเกม</button>
     <button class="btn btn-end" id="btnEnd" onclick="doEnd()">⏹️ จบเกม</button>
@@ -614,6 +613,7 @@ function esc(s){
 }
 
 function render(s){
+  window.gameIsRunning = s.gameStarted && !s.gameEnded; // 🔹 เพิ่มบรรทัดนี้
   document.getElementById('gameNameLabel').textContent = s.gameName || 'ตลาดนัดนักเรียน';
 
   const statusPill = document.getElementById('statusPill');
@@ -724,21 +724,37 @@ if(teacherKey){
     }
   })();
 }
-async function startAuction(){
-  showLoading('กำลังสุ่มของแรร์ลงลานประมูล...');
-  const r = await api('teacherStartAuction', { key: teacherKey });
-  closeLoading();
-  if(r.error) showResult('error', 'ขัดข้อง', r.error); else showResult('success', 'เริ่มประมูลแล้ว!', 'นักเรียนจะเห็นป๊อปอัปเด้งขึ้นหน้าจอทันที');
-  render(r);
-}
+// ================= ระบบบอทประมูลอัตโนมัติ =================
+let aucPhase = 'waiting'; 
+let aucTimer = 300; // นับถอยหลังรอรอบละ 5 นาที (300 วินาที)
+window.gameIsRunning = false;
 
-async function endAuction(){
-  showLoading('กำลังปิดการประมูล...');
-  const r = await api('teacherEndAuction', { key: teacherKey });
-  closeLoading();
-  if(r.error) showResult('error', 'ขัดข้อง', r.error); else showResult('success', 'ปิดประมูลเรียบร้อย', 'สินค้าถูกส่งเข้าสต๊อกของคนชนะแล้ว');
-  render(r);
-}
+setInterval(() => {
+  const pill = document.getElementById('autoAucPill');
+  // ถ้ายังไม่เริ่มเกม ให้บอทสแตนด์บาย
+  if (!window.gameIsRunning) {
+    pill.textContent = '🤖 บอทประมูล: รอเริ่มเกม';
+    return;
+  }
+  
+  aucTimer--;
+  
+  if (aucPhase === 'waiting') {
+    pill.textContent = `🤖 สุ่มประมูลใน: ${Math.floor(aucTimer/60)}:${String(aucTimer%60).padStart(2,'0')}`;
+    if (aucTimer <= 0) {
+      api('teacherStartAuction', { key: teacherKey }); // สั่งบอทเปิดประมูล
+      aucPhase = 'active';
+      aucTimer = 60; // 🔹 ให้เวลาเด็กสู้ราคา 1 นาที (60 วินาที)
+    }
+  } else if (aucPhase === 'active') {
+    pill.textContent = `🔥 กำลังประมูล! ปิดใน: ${aucTimer} วิ`;
+    if (aucTimer <= 0) {
+      api('teacherEndAuction', { key: teacherKey }); // สั่งบอทปิดประมูลและแจกของ
+      aucPhase = 'waiting';
+      aucTimer = 300; // กลับไปนับถอยหลัง 5 นาทีใหม่
+    }
+  }
+}, 1000);
 </script>
 </body>
 </html>
