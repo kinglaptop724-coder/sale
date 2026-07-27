@@ -601,6 +601,10 @@
       </div>
     </div>
     <div class="window-body">
+      <div class="card" style="background-color: #fdfdfd; border-color: #7f5aa2;">
+        <h3 style="color: #7f5aa2; border-bottom: 3px dashed #d9cde5;">🎯 ภารกิจสุ่มของฉัน</h3>
+        <div id="missionContent"></div>
+      </div>
       <div class="card">
         <h3>🚚 รถขายของของฉัน</h3>
         <div id="shopBox"></div>
@@ -789,7 +793,61 @@ function fmtTime(sec){
   const m = Math.floor(sec/60), s = sec%60;
   return `⏳ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
+// ชุดภารกิจแบบสุ่ม (คุณครูสามารถเพิ่ม/ลดได้ตามต้องการ)
+const MISSION_LIST = [
+  { id: 1, title: 'ก้าวแรกสู่เถ้าแก่', desc: 'เปิดร้านรถขายของเป็นของตัวเอง', target: (s) => s.myShop && s.myShop.opened },
+  { id: 2, title: 'นักสะสมทุน', desc: 'สะสมเงินสดให้ถึง 1,500 บาท', target: (s) => s.student.cash >= 1500 },
+  { id: 3, title: 'เจ้าพ่อสต๊อก', desc: 'มีสินค้าในสต๊อกรวมกัน 15 ชิ้นขึ้นไป', target: (s) => s.inventory.reduce((sum, i) => sum + i.qty, 0) >= 15 },
+  { id: 4, title: 'แม่ค้ามือโปร', desc: 'วางขายสินค้า 3 รายการพร้อมกันขึ้นไป', target: (s) => s.myListings && s.myListings.length >= 3 },
+  { id: 5, title: 'เศรษฐีหน้าใหม่', desc: 'ทำมูลค่าสุทธิ (เงิน+สต๊อก) ให้เกิน 2,500 บาท', target: (s) => {
+      // คำนวณมูลค่าสุทธิจากกระดานผู้นำ
+      const myData = s.leaderboard.find(p => p.name === s.student.name);
+      return myData && myData.netWorth >= 2500;
+  }}
+];
 
+function renderMission(s) {
+  const el = document.getElementById('missionContent');
+  if (!el) return;
+
+  const storageKey = 'myMission_' + studentId;
+  let myMissionData = JSON.parse(localStorage.getItem(storageKey));
+
+  // สุ่มภารกิจใหม่ถ้ายังไม่มี
+  if (!myMissionData) {
+    const randomMission = MISSION_LIST[Math.floor(Math.random() * MISSION_LIST.length)];
+    myMissionData = { id: randomMission.id, completed: false };
+    localStorage.setItem(storageKey, JSON.stringify(myMissionData));
+  }
+
+  const missionDef = MISSION_LIST.find(m => m.id === myMissionData.id) || MISSION_LIST[0];
+
+  if (myMissionData.completed) {
+    el.innerHTML = `<div style="text-align:center; padding:12px; background:#e6f9eb; border-radius:10px; color:#2d8a48; font-weight:bold; border: 2px solid #4cc26c;">
+      🎉 ภารกิจ "${missionDef.title}" สำเร็จแล้ว!
+    </div>`;
+  } else {
+    // ตรวจสอบว่าผ่านหรือยัง ถ้าผ่านให้บันทึกและขึ้นแจ้งเตือน
+    const isDone = missionDef.target(s);
+    if (isDone) {
+      myMissionData.completed = true;
+      localStorage.setItem(storageKey, JSON.stringify(myMissionData));
+      showToast('🎉 ยินดีด้วย! ทำภารกิจสำเร็จแล้ว!');
+      el.innerHTML = `<div style="text-align:center; padding:12px; background:#e6f9eb; border-radius:10px; color:#2d8a48; font-weight:bold; border: 2px solid #4cc26c;">
+        🎉 ภารกิจ "${missionDef.title}" สำเร็จแล้ว!
+      </div>`;
+    } else {
+      // ไฮไลต์ด้วยสีเทาอ่อนตามความเหมาะสม ไม่แยงตา
+      el.innerHTML = `
+        <div style="padding:12px; background:#e2e4e9; border-radius:10px; border:2px dashed #6b4423;">
+          <strong style="color:var(--ink); font-size: 0.95rem;">${missionDef.title}</strong><br>
+          <span style="font-size:0.85rem; color:var(--wood-dark);">${missionDef.desc}</span>
+          <div style="margin-top:8px; font-size:0.75rem; color:var(--red-dark); font-weight: 700;">⏳ กำลังดำเนินการ...</div>
+        </div>
+      `;
+    }
+  }
+}
 function render(s){
   document.getElementById('gameNameLabel').textContent = s.gameName;
   document.getElementById('myAvatarLabel').textContent = vendorEmoji(s.student.name);
@@ -813,6 +871,8 @@ function render(s){
   renderInventory(s.inventory, s.gameEnded, s.myShop && s.myShop.opened);
   renderMyListings(s.myListings, s.gameEnded);
   renderLeaderboard(s.leaderboard, s.student.name);
+  
+  renderMission(s); // เพิ่มบรรทัดนี้เพื่อเรียกใช้ระบบภารกิจ
 }
 
 let truckStyles = [];
