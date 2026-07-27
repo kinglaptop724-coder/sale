@@ -685,7 +685,24 @@
     <button class="btn btn-shop" id="shopModalSubmitBtn" onclick="submitShopModal()"></button>
   </div>
 </div>
-
+<div id="auctionBanner" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#fff; border:4px solid var(--gold); border-radius:18px; padding:20px; z-index:90; box-shadow:0 8px 24px rgba(0,0,0,0.4); text-align:center; width:90%; max-width:350px;">
+  <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:var(--red); color:#fff; padding:4px 16px; border-radius:20px; font-weight:bold; border:2px solid var(--line); font-size:0.85rem;">🚨 ลานประมูลด่วน!</div>
+  
+  <div id="aucEmoji" style="font-size:4rem; margin:15px 0 5px; line-height:1;">💎</div>
+  <div id="aucItem" style="font-size:1.3rem; font-weight:800; margin-bottom:10px;">ชื่อสินค้า</div>
+  
+  <div style="background:#f4f5f7; border:2px solid var(--line-soft); border-radius:10px; padding:10px; margin-bottom:12px;">
+    <div style="font-size:0.8rem; color:var(--wood-dark);">ผู้นำราคาตอนนี้:</div>
+    <div id="aucWinner" style="font-size:1rem; font-weight:bold; color:var(--green-dark);">รอผู้เปิดประมูล...</div>
+  </div>
+  
+  <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:15px;">
+    <span style="font-size:0.9rem; font-weight:bold;">ราคาปัจจุบัน:</span>
+    <span class="price-tag" style="font-size:1.3rem;" id="aucPrice">100</span>
+  </div>
+  
+  <button id="btnBid" class="btn btn-buy" style="width:100%; font-size:1.05rem; padding:12px;" onclick="doBid()">สู้ราคา +1 เหรียญ</button>
+</div>
 <script>
 // ==========================================================
 // ตั้งค่า URL ของ Google Apps Script Web App ที่ deploy แล้ว
@@ -849,6 +866,18 @@ function renderMission(s) {
   }
 }
 function render(s){
+  // --- ระบบอัปเดตประมูล ---
+  const aucBanner = document.getElementById('auctionBanner');
+  if(s.auction && s.auction.active) {
+    aucBanner.style.display = 'block';
+    document.getElementById('aucEmoji').innerHTML = s.auction.emoji;
+    document.getElementById('aucItem').textContent = s.auction.item;
+    document.getElementById('aucWinner').textContent = s.auction.winnerName;
+    document.getElementById('aucPrice').textContent = s.auction.price;
+  } else {
+    aucBanner.style.display = 'none';
+  }
+  // -----------------------
   document.getElementById('gameNameLabel').textContent = s.gameName;
   document.getElementById('myAvatarLabel').textContent = vendorEmoji(s.student.name);
   document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
@@ -1297,6 +1326,21 @@ if(studentId){
   document.getElementById('main').classList.add('show');
   document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
   startPolling();
+}
+async function doBid(){
+  const btn = document.getElementById('btnBid');
+  btn.disabled = true;
+  btn.textContent = 'กำลังสู้ราคา...';
+  try {
+    const r = await api('bidAuction', { studentId });
+    if(r.error) showToast(r.error); else showToast(`คุณคือผู้นำราคาตอนนี้!`);
+    await fetchState();
+  } catch(err) {
+    showToast('ขัดข้อง ลองกดใหม่');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'สู้ราคา +1 เหรียญ';
+  }
 }
 </script>
 
