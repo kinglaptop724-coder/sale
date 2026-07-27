@@ -726,12 +726,11 @@ if(teacherKey){
 }
 // ================= ระบบบอทประมูลอัตโนมัติ =================
 let aucPhase = 'waiting'; 
-let aucTimer = 300; // นับถอยหลังรอรอบละ 5 นาที (300 วินาที)
+let aucTimer = 300; // รอบละ 5 นาที
 window.gameIsRunning = false;
 
 setInterval(() => {
   const pill = document.getElementById('autoAucPill');
-  // ถ้ายังไม่เริ่มเกม ให้บอทสแตนด์บาย
   if (!window.gameIsRunning) {
     pill.textContent = '🤖 บอทประมูล: รอเริ่มเกม';
     return;
@@ -740,18 +739,25 @@ setInterval(() => {
   aucTimer--;
   
   if (aucPhase === 'waiting') {
-    pill.textContent = `🤖 สุ่มประมูลใน: ${Math.floor(aucTimer/60)}:${String(aucTimer%60).padStart(2,'0')}`;
+    pill.textContent = `🤖 รอเปิดประมูล: ${Math.floor(aucTimer/60)}:${String(aucTimer%60).padStart(2,'0')}`;
     if (aucTimer <= 0) {
-      api('teacherStartAuction', { key: teacherKey }); // สั่งบอทเปิดประมูล
+      api('teacherPrepareAuction', { key: teacherKey }); // 🔹 สั่งเตรียมประมูล (หน้าจอเด็กจะเด้งถาม)
+      aucPhase = 'preparing';
+      aucTimer = 10; // 🔹 ให้เวลาเด็กกดตัดสินใจ 10 วินาที
+    }
+  } else if (aucPhase === 'preparing') {
+    pill.textContent = `⏳ ถามผู้เล่น... เหลือ ${aucTimer} วิ`;
+    if (aucTimer <= 0) {
+      api('teacherStartAuction', { key: teacherKey }); // 🔹 ครบ 10 วิ ระบบจะสุ่มของและเปิดประมูลทันที
       aucPhase = 'active';
-      aucTimer = 60; // 🔹 ให้เวลาเด็กสู้ราคา 1 นาที (60 วินาที)
+      aucTimer = 60; // 🔹 ประมูลจริง 1 นาที
     }
   } else if (aucPhase === 'active') {
     pill.textContent = `🔥 กำลังประมูล! ปิดใน: ${aucTimer} วิ`;
     if (aucTimer <= 0) {
-      api('teacherEndAuction', { key: teacherKey }); // สั่งบอทปิดประมูลและแจกของ
+      api('teacherEndAuction', { key: teacherKey }); 
       aucPhase = 'waiting';
-      aucTimer = 300; // กลับไปนับถอยหลัง 5 นาทีใหม่
+      aucTimer = 300; 
     }
   }
 }, 1000);
