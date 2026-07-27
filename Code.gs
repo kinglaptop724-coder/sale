@@ -344,8 +344,15 @@ function getShop(studentId) {
   return shops.find(s => s.studentId === studentId);
 }
 
+// Google Sheets จะแปลงค่า string "TRUE"/"FALSE" ที่เขียนเข้าไปให้กลายเป็นค่า Boolean จริงโดยอัตโนมัติ
+// เมื่ออ่านกลับมาผ่าน getValues() จึงอาจได้ boolean true หรือ string 'TRUE' ก็ได้ (ขึ้นกับว่า Sheets ตีความยังไง)
+// ฟังก์ชันนี้เช็คให้ครอบคลุมทั้งสองแบบ กันปัญหา "เปิดร้านแล้วระบบไม่รู้ว่าเปิด"
+function isOpenValue(v) {
+  return v === true || v === 'TRUE' || v === 'true';
+}
+
 function isShopOpen(shop) {
-  return !!shop && shop.isOpen === 'TRUE';
+  return !!shop && isOpenValue(shop.isOpen);
 }
 
 function saveShop(studentId, shopName, styleId, isOpen, tagline) {
@@ -422,7 +429,7 @@ function handleState(body) {
 
   return {
     gameName: cfg.GAME_NAME,
-    gameEnded: cfg.GAME_ENDED === 'TRUE' || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
+    gameEnded: isOpenValue(cfg.GAME_ENDED) || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
     timeLeftSeconds,
     student: { id: student.id, name: student.name, cash: student.cash },
     supplierItems: getSupplierItems(),
@@ -436,9 +443,9 @@ function handleState(body) {
           id: l.id,
           sellerId: l.sellerId,
           sellerName: l.sellerName,
-          shopName: (sellerShop && sellerShop.isOpen === 'TRUE') ? sellerShop.shopName : ('แผง' + l.sellerName),
-          styleId: (sellerShop && sellerShop.isOpen === 'TRUE') ? sellerShop.styleId : null,
-          shopTagline: (sellerShop && sellerShop.isOpen === 'TRUE') ? (sellerShop.tagline || '') : '',
+          shopName: (sellerShop && isOpenValue(sellerShop.isOpen)) ? sellerShop.shopName : ('แผง' + l.sellerName),
+          styleId: (sellerShop && isOpenValue(sellerShop.isOpen)) ? sellerShop.styleId : null,
+          shopTagline: (sellerShop && isOpenValue(sellerShop.isOpen)) ? (sellerShop.tagline || '') : '',
           itemName: l.itemName, qty: l.qty, price: l.price
         };
       }),
@@ -515,7 +522,7 @@ function handleTeacherState(body) {
     gameName: cfg.GAME_NAME,
     joinCode: cfg.JOIN_CODE,
     gameStarted: !!cfg.GAME_STARTED_AT,
-    gameEnded: cfg.GAME_ENDED === 'TRUE' || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
+    gameEnded: isOpenValue(cfg.GAME_ENDED) || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
     timeLeftSeconds,
     playerCount: students.length,
     shopsOpenCount: Object.values(shopsMap).filter(isShopOpen).length,
