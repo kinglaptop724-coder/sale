@@ -601,13 +601,25 @@ async function submitShopModal(){
   const tagline = document.getElementById('shopModalTaglineInput').value.trim();
   if(!shopName){ showToast('ตั้งชื่อร้านก่อนนะ'); return; }
 
+  const btn = document.getElementById('shopModalSubmitBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = myShop.opened ? 'กำลังบันทึก...' : 'กำลังเปิดร้าน...';
+  showToast(myShop.opened ? 'กำลังบันทึกร้านค้า...' : 'กำลังเปิดร้าน...');
+
   const action = myShop.opened ? 'updateShop' : 'openShop';
   const r = await api(action, { studentId, shopName, tagline, styleId: shopModalStyleId });
-  if(r.error){ showToast(r.error); return; }
+
+  if(r.error){
+    showToast(r.error);
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+    return;
+  }
 
   showToast(myShop.opened ? 'บันทึกร้านค้าแล้ว' : 'เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
+  await fetchState(); // รอให้ข้อมูลอัปเดตจริงก่อน ค่อยปิดหน้าต่าง กันปัญหาเปิดร้านแล้วข้อมูลยังไม่ขึ้น
   closeShopModal();
-  fetchState();
 }
 
 // ปิดป๊อปอัพเมื่อคลิกพื้นหลังมืดรอบนอกกล่อง
@@ -645,7 +657,7 @@ function renderSupplier(items){
       <div class="item-name">${it.itemName}</div>
       <div class="item-price price-tag">${it.price} บ.</div>
       <input class="qty-input" type="number" min="1" value="1" id="buyqty_${it.itemName}">
-      <button class="btn btn-buy" onclick="buySupplier('${it.itemName}')">ซื้อ</button>
+      <button class="btn btn-buy" onclick="buySupplier('${it.itemName}', this)">ซื้อ</button>
     </div>
   `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
   setHtmlPreserveInputs(el, html);
@@ -694,7 +706,7 @@ function renderMarket(listings, ended){
         </div>
         <div class="truck-good-controls">
           <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
-          <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}')">ซื้อ</button>
+          <button class="btn btn-buy" ${ended?'disabled':''} onclick="buyListing('${l.id}', this)">ซื้อ</button>
         </div>
       </div>
     `).join('');
@@ -727,7 +739,7 @@ function renderInventory(inv, ended, shopOpened){
       <div class="item-name">${i.itemName} x${i.qty}<br><span class="inv-cost">ต้นทุนเฉลี่ย ${i.avgCost} บ./ชิ้น</span></div>
       <input class="qty-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
       <input class="price-input" type="number" min="1" placeholder="ราคาขาย" id="sellprice_${i.itemName}">
-      <button class="btn btn-sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}')">วางขาย</button>
+      <button class="btn btn-sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}', this)">วางขาย</button>
     </div>
   `).join('');
   setHtmlPreserveInputs(el, html);
@@ -740,7 +752,7 @@ function renderMyListings(listings, ended){
     <div class="item-row">
       <div class="item-name">${l.itemName} x${l.qty}</div>
       <div class="price-tag">${l.price} บ.</div>
-      <button class="btn btn-cancel" ${ended?'disabled':''} onclick="cancelListing('${l.id}')">ยกเลิก</button>
+      <button class="btn btn-cancel" ${ended?'disabled':''} onclick="cancelListing('${l.id}', this)">ยกเลิก</button>
     </div>
   `).join('');
 }
@@ -759,30 +771,38 @@ function renderLeaderboard(list, myName){
   `).join('');
 }
 
-async function buySupplier(itemName){
+async function buySupplier(itemName, btn){
   const qty = Number(document.getElementById(`buyqty_${itemName}`).value);
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
+  showToast('กำลังซื้อ...');
   const r = await api('buyFromSupplier', { studentId, itemName, qty });
   if(r.error) showToast(r.error); else showToast(`ซื้อ ${itemName} x${qty} สำเร็จ`);
   fetchState();
 }
 
-async function listForSale(itemName){
+async function listForSale(itemName, btn){
   const qty = Number(document.getElementById(`sellqty_${itemName}`).value);
   const price = Number(document.getElementById(`sellprice_${itemName}`).value);
   if(!price){ showToast('ใส่ราคาขายด้วย'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังวางขาย...'; }
+  showToast('กำลังวางขาย...');
   const r = await api('listForSale', { studentId, itemName, qty, price });
   if(r.error) showToast(r.error); else showToast(`วางขาย ${itemName} x${qty} แล้ว`);
   fetchState();
 }
 
-async function cancelListing(listingId){
+async function cancelListing(listingId, btn){
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังยกเลิก...'; }
+  showToast('กำลังยกเลิกรายการ...');
   const r = await api('cancelListing', { studentId, listingId });
   if(r.error) showToast(r.error); else showToast('ยกเลิกรายการแล้ว');
   fetchState();
 }
 
-async function buyListing(listingId){
+async function buyListing(listingId, btn){
   const qty = Number(document.getElementById(`buymarket_${listingId}`).value);
+  if(btn){ btn.disabled = true; btn.textContent = 'กำลังซื้อ...'; }
+  showToast('กำลังซื้อ...');
   const r = await api('buyListing', { studentId, listingId, qty });
   if(r.error) showToast(r.error); else showToast(`ซื้อสำเร็จ! -${r.total} บ.`);
   fetchState();
