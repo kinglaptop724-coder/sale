@@ -340,6 +340,14 @@
   .window-body {
     flex: 1 !important;
   }
+  /* จัดระเบียบไอคอน SVG ให้ตรงกับข้อความ */
+  .icon-svg {
+    width: 24px;
+    height: 24px;
+    vertical-align: text-bottom;
+    margin-right: 8px;
+    display: inline-block;
+  }
 </style>
 </head>
 <body>
@@ -361,6 +369,11 @@
   <div class="stats">
     <span class="pill" id="statusPill">-</span>
     <span class="pill" id="timerPill">-</span>
+    
+    <!-- ปุ่มประมูลสำหรับครู -->
+    <button class="btn" style="background:#ffd23f; color:#2c1c0d; border-color:#2c1c0d;" onclick="startAuction()">🎁 สุ่มเปิดประมูล</button>
+    <button class="btn btn-end" onclick="endAuction()">🔨 ปิดประมูล (แจกของ)</button>
+    
     <button class="btn btn-start" id="btnStart" onclick="doStart()">▶️ เริ่มเกม</button>
     <button class="btn btn-end" id="btnEnd" onclick="doEnd()">⏹️ จบเกม</button>
     <button class="btn btn-reset" id="btnReset" onclick="openResetModal()">รีเซ็ต</button>
@@ -710,6 +723,21 @@ if(teacherKey){
       startPolling();
     }
   })();
+}
+async function startAuction(){
+  showLoading('กำลังสุ่มของแรร์ลงลานประมูล...');
+  const r = await api('teacherStartAuction', { key: teacherKey });
+  closeLoading();
+  if(r.error) showResult('error', 'ขัดข้อง', r.error); else showResult('success', 'เริ่มประมูลแล้ว!', 'นักเรียนจะเห็นป๊อปอัปเด้งขึ้นหน้าจอทันที');
+  render(r);
+}
+
+async function endAuction(){
+  showLoading('กำลังปิดการประมูล...');
+  const r = await api('teacherEndAuction', { key: teacherKey });
+  closeLoading();
+  if(r.error) showResult('error', 'ขัดข้อง', r.error); else showResult('success', 'ปิดประมูลเรียบร้อย', 'สินค้าถูกส่งเข้าสต๊อกของคนชนะแล้ว');
+  render(r);
 }
 </script>
 </body>
