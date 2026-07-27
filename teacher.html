@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
 <style>
   :root{
     --night: #0c211c;
@@ -313,12 +314,40 @@ async function api(action, payload){
   return res.json();
 }
 
+// ---------- SweetAlert2 helpers (ธีมให้เข้ากับหน้าเว็บ) ----------
+const swalTheme = {
+  background: '#16352f',
+  color: '#f6ecd6',
+  confirmButtonColor: '#f3a83f'
+};
+
+function showLoading(text){
+  Swal.fire({
+    title: text,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    ...swalTheme,
+    didOpen: () => { Swal.showLoading(); }
+  });
+}
+
+function closeLoading(){
+  Swal.close();
+}
+
+function showResult(icon, title, text){
+  return Swal.fire({ icon, title, text, ...swalTheme });
+}
+
 async function doLogin(){
   const key = document.getElementById('keyInput').value.trim();
   const msg = document.getElementById('loginMsg');
   if(!key){ msg.textContent = 'กรอกรหัสครูก่อนนะ'; return; }
-  msg.textContent = 'กำลังตรวจสอบ...';
+  msg.textContent = '';
+  showLoading('กำลังตรวจสอบรหัสครู...');
   const r = await api('teacherState', { key });
+  closeLoading();
   if(r.error){ msg.textContent = r.error; return; }
   teacherKey = key;
   sessionStorage.setItem('marketTeacherKey', key);
@@ -357,18 +386,22 @@ async function fetchState(){
 async function doStart(){
   const btn = document.getElementById('btnStart');
   btn.disabled = true;
+  showLoading('กำลังเริ่มเกม...');
   const r = await api('teacherStart', { key: teacherKey });
+  closeLoading();
   btn.disabled = false;
-  if(r.error){ alert(r.error); return; }
+  if(r.error){ showResult('error', 'เริ่มเกมไม่สำเร็จ', r.error); return; }
   render(r);
 }
 
 async function doEnd(){
   const btn = document.getElementById('btnEnd');
   btn.disabled = true;
+  showLoading('กำลังจบเกม...');
   const r = await api('teacherEnd', { key: teacherKey });
+  closeLoading();
   btn.disabled = false;
-  if(r.error){ alert(r.error); return; }
+  if(r.error){ showResult('error', 'จบเกมไม่สำเร็จ', r.error); return; }
   render(r);
 }
 
@@ -383,13 +416,15 @@ function closeResetModal(){
 
 async function doReset(){
   const confirmText = document.getElementById('resetConfirmInput').value.trim();
-  if(confirmText !== 'RESET'){ alert('พิมพ์ RESET ให้ตรงก่อนนะ'); return; }
-  const r = await api('teacherReset', { key: teacherKey, confirm: confirmText });
+  if(confirmText !== 'RESET'){ showResult('warning', 'ยังไม่ได้ยืนยัน', 'พิมพ์ RESET ให้ตรงก่อนนะ'); return; }
   closeResetModal();
-  if(r.error){ alert(r.error); return; }
+  showLoading('กำลังรีเซ็ตข้อมูลทั้งหมด...');
+  const r = await api('teacherReset', { key: teacherKey, confirm: confirmText });
+  closeLoading();
+  if(r.error){ showResult('error', 'รีเซ็ตไม่สำเร็จ', r.error); return; }
   // รีเซ็ตสำเร็จ: รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้นแล้ว session เดิมใช้ต่อไม่ได้
   doLogout();
-  alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้น (teacher123) กรุณาเข้าสู่ระบบใหม่ หรือไปตั้งรหัสใหม่ที่แท็บ Config บน Sheet');
+  showResult('success', 'รีเซ็ตข้อมูลเรียบร้อยแล้ว', 'รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้น (teacher123) กรุณาเข้าสู่ระบบใหม่ หรือไปตั้งรหัสใหม่ที่แท็บ Config บน Sheet');
 }
 
 function fmtTime(sec){
@@ -502,8 +537,10 @@ function render(s){
 
 // เข้าใหม่อัตโนมัติถ้าเคย login ไว้แล้วในรอบนี้
 if(teacherKey){
+  showLoading('กำลังเข้าสู่ระบบอัตโนมัติ...');
   (async () => {
     const r = await api('teacherState', { key: teacherKey });
+    closeLoading();
     if(!r.error){
       document.getElementById('login').style.display = 'none';
       document.getElementById('topbar').style.display = 'flex';
