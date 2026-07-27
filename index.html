@@ -593,10 +593,27 @@ async function submitUpdateShop(){
 let itemEmojiMap = {};
 function itemEmoji(name){ return itemEmojiMap[name] || '📦'; }
 
+// เซตอินเนอร์ HTML ใหม่ โดยไม่ทำให้ตัวเลขที่ผู้เล่นพิมพ์ค้างอยู่ในช่อง input หายไป
+// (ปัญหาเดิม: renderState ทำงานทุก 3 วิ แล้วเขียนทับ input ทั้งหมดด้วยค่าเริ่มต้น)
+function setHtmlPreserveInputs(el, html){
+  const inputs = el.querySelectorAll('input[id]');
+  const saved = {};
+  inputs.forEach(inp => {
+    saved[inp.id] = { value: inp.value, focused: document.activeElement === inp };
+  });
+  el.innerHTML = html;
+  Object.keys(saved).forEach(id => {
+    const ni = document.getElementById(id);
+    if(!ni) return;
+    ni.value = saved[id].value;
+    if(saved[id].focused) ni.focus();
+  });
+}
+
 function renderSupplier(items){
   items.forEach(it => itemEmojiMap[it.itemName] = it.emoji || '📦');
   const el = document.getElementById('supplierList');
-  el.innerHTML = items.map(it => `
+  const html = items.map(it => `
     <div class="item-row">
       <div class="emoji">${it.emoji||'📦'}</div>
       <div class="item-name">${it.itemName}</div>
@@ -605,6 +622,7 @@ function renderSupplier(items){
       <button class="btn btn-buy" onclick="buySupplier('${it.itemName}')">ซื้อ</button>
     </div>
   `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
+  setHtmlPreserveInputs(el, html);
 }
 
 // อวตาร์แม่ค้า/พ่อค้า สุ่มแบบ deterministic ตามชื่อ (คนเดิมได้อวตาร์เดิมเสมอ)
@@ -634,7 +652,7 @@ function renderMarket(listings, ended){
     bySeller[key].goods.push(l);
   });
 
-  el.innerHTML = Object.values(bySeller).map(({sellerName, shopName, styleId, goods}) => {
+  const html = Object.values(bySeller).map(({sellerName, shopName, styleId, goods}) => {
     const st = styleId ? styleById(styleId) : null;
     const emoji = st ? st.emoji : vendorEmoji(sellerName);
     const colorA = st ? st.colorA : vendorPalette(sellerName)[0];
@@ -670,13 +688,14 @@ function renderMarket(listings, ended){
       </div>
     `;
   }).join('');
+  setHtmlPreserveInputs(el, html);
 }
 
 function renderInventory(inv, ended, shopOpened){
   const el = document.getElementById('myInventory');
   if(!inv.length){ el.innerHTML = '<div class="empty">ยังไม่มีของในสต๊อก ลองซื้อจากซัพพลายเออร์ดูสิ</div>'; return; }
   const hint = !shopOpened ? `<div class="empty" style="margin-bottom:8px">🚚 เปิดร้านรถขายของก่อน ถึงจะวางขายในตลาดกลางได้ (ดูการ์ดด้านบน)</div>` : '';
-  el.innerHTML = hint + inv.map(i => `
+  const html = hint + inv.map(i => `
     <div class="inv-item">
       <div class="item-name">${i.itemName} x${i.qty}<br><span class="inv-cost">ต้นทุนเฉลี่ย ${i.avgCost} บ./ชิ้น</span></div>
       <input class="qty-input" type="number" min="1" max="${i.qty}" value="1" id="sellqty_${i.itemName}">
@@ -684,6 +703,7 @@ function renderInventory(inv, ended, shopOpened){
       <button class="btn btn-sell" ${(ended || !shopOpened)?'disabled':''} onclick="listForSale('${i.itemName}')">วางขาย</button>
     </div>
   `).join('');
+  setHtmlPreserveInputs(el, html);
 }
 
 function renderMyListings(listings, ended){
