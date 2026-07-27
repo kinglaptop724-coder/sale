@@ -177,9 +177,15 @@
   tr:hover td{background:rgba(255,210,63,0.1);}
   td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
 
-  .leaderboard-row{
-    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;
-    position:relative;overflow:hidden;margin-bottom:4px;
+  .leaderboard-row {
+    display: flex; align-items: center; gap: 10px; 
+    padding: 10px 14px; /* เพิ่มพื้นที่ด้านในให้ดูไม่อึดอัด */
+    border-radius: 10px !important; /* ให้โค้งมนเท่ากับองค์ประกอบอื่นๆ */
+    position: relative; overflow: hidden; 
+    margin-bottom: 8px; /* เพิ่มระยะห่างระหว่างแต่ละอันดับ */
+    background: #ffffff; /* ปรับพื้นหลังเป็นสีขาวให้กล่องดูเด่นขึ้น */
+    border: 2px solid var(--line); /* เพิ่มเส้นขอบให้ชัดเจนเข้ากับธีม */
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.15); /* เพิ่มมิติด้วยเงา */
   }
   .leaderboard-row .bar{
     position:absolute;left:0;top:0;bottom:0;
