@@ -254,6 +254,7 @@ function runAction(action, body) {
     
     // ---------------- เพิ่ม 3 บรรทัดนี้ ----------------
     case 'bidAuction': return handleBidAuction(body);
+    case 'teacherPrepareAuction': return handleTeacherPrepareAuction(body);
     case 'teacherStartAuction': return handleTeacherStartAuction(body);
     case 'teacherEndAuction': return handleTeacherEndAuction(body);
     // ------------------------------------------------
@@ -509,7 +510,7 @@ function handleState(body) {
       tagline: myShop ? (myShop.tagline || '') : ''
     },
     auction: {
-      active: cfg.AUCTION_ACTIVE === 'TRUE',
+      state: String(cfg.AUCTION_ACTIVE || 'FALSE'), // ใช้คำว่า state แทน active
       item: cfg.AUCTION_ITEM || '',
       price: Number(cfg.AUCTION_PRICE || 0),
       winnerName: cfg.AUCTION_WINNER_NAME || '-',
@@ -790,7 +791,6 @@ function handleBuyListing(body) {
 
   return { ok: true, total };
 }
-// ================= ระบบประมูล =================
 function handleTeacherStartAuction(body) {
   if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
   
@@ -801,7 +801,7 @@ function handleTeacherStartAuction(body) {
   
   setConfig('AUCTION_ACTIVE', 'TRUE');
   setConfig('AUCTION_ITEM', targetItem.itemName);
-  setConfig('AUCTION_PRICE', targetItem.basePrice); // เริ่มต้นที่ราคาฐาน
+  setConfig('AUCTION_PRICE', 0); // 🔹 เริ่มที่ 0 บาท
   setConfig('AUCTION_WINNER', '');
   setConfig('AUCTION_WINNER_NAME', '-');
   setConfig('AUCTION_EMOJI', targetItem.emoji);
@@ -825,19 +825,19 @@ function handleTeacherEndAuction(body) {
 
 function handleBidAuction(body) {
   const cfg = getConfigMap();
-  if (cfg.AUCTION_ACTIVE !== 'TRUE') return { error: 'ปิดประมูลไปแล้ว!' };
+  if (!isOpenValue(cfg.AUCTION_ACTIVE)) return { error: 'ปิดประมูลไปแล้ว!' };
   
   const student = findStudent(body.studentId);
   if (!student) return { error: 'ไม่พบผู้เล่น' };
   
   let curPrice = Number(cfg.AUCTION_PRICE || 0);
-  let newPrice = curPrice + 1; // สู้ราคาทีละ 1 เหรียญ
+  let newPrice = curPrice + 1; // 🔹 สู้ราคาทีละ 1 เหรียญ (ถ้าเริ่ม 0 คนแรกกดจะได้ 1 บาทพอดี)
   
   if (cfg.AUCTION_WINNER === student.id) return { error: 'เธอเป็นผู้นำอยู่แล้ว!' };
   if (student.cash < newPrice) return { error: 'เงินไม่พอประมูล' };
 
-  // คืนเงินให้คนนำคนเก่า
-  if (cfg.AUCTION_WINNER && cfg.AUCTION_WINNER !== '') {
+  // คืนเงินให้คนนำคนเก่า (ถ้ามีคนนำ และราคามากกว่า 0)
+  if (cfg.AUCTION_WINNER && cfg.AUCTION_WINNER !== '' && curPrice > 0) {
     const oldWinner = findStudent(cfg.AUCTION_WINNER);
     if (oldWinner) updateStudentCash(oldWinner.id, oldWinner.cash + curPrice);
   }
