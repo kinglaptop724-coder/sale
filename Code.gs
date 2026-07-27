@@ -51,13 +51,13 @@ function setupCore() {
     ['KEY', 'VALUE'],
     ['GAME_NAME', 'ตลาดนัดนักเรียน'],
     ['JOIN_CODE', 'ROOM1'],
-    ['START_CASH', 500],
-    ['ROUND_MINUTES', 30],
+    ['START_CASH', 1000],
+    ['ROUND_MINUTES', 60],
     ['GAME_STARTED_AT', ''],
     ['GAME_ENDED', 'FALSE'],
     ['LISTING_FEE_PERCENT', 0],
-    ['TRUCK_COST', 150],
-    ['TEACHER_KEY', 'teacher123']
+    ['TRUCK_COST', 50],
+    ['TEACHER_KEY', '1234']
   ]);
 
   const items = getOrCreateSheet(ss, SHEETS.ITEMS);
