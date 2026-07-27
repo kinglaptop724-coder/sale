@@ -145,11 +145,11 @@
   .teacher-access:hover{transform:translateY(-2px);}
   .teacher-access:active{transform:translateY(1px);box-shadow:1px 1px 0 rgba(0,0,0,0.25);}
 
-  main{max-width:1100px;margin:0 auto;padding:22px 20px;display:none;}
+  main{max-width:1600px; /* ขยายให้รองรับจอคอมกว้างๆ */ margin:0 auto;padding:22px 20px;display:none;}
   main.show{display:block;}
 
-  .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
-  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+  /* แบ่งเป็น 3 ส่วน: ส้ม(1ส่วน) ฟ้า(1ส่วน) เขียว(1.3ส่วน ให้ตลาดกว้างหน่อย) */
+  .grid{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:18px;align-items:start;}
 
   .card{
     background:var(--panel);
@@ -504,6 +504,7 @@
   /* --- ธีมสีฟ้า (หน้าซื้อของ) --- */
   .window-blue .window-header { background-color: #7abdf4; } /* สีฟ้าหัวกล่อง */
   .window-blue .window-body { background-color: #e5f0fa; } /* สีฟ้าอ่อนเนื้อหา */
+  .window-green .window-body { background-color: #e6f9eb; } /* สีเขียวอ่อนเนื้อหา */
   /* ปรับปุ่มและป้ายกำกับทั้งหมดให้เป็นสี่เหลี่ยมขอบมนมาตรฐานเดียวกัน */
   .btn, button, #login button, .teacher-access, .btn-market-more,
   .btn-shop, .btn-edit-shop, .btn-logout, .modal-close,
@@ -548,19 +549,14 @@
 </div>
 
 <div class="grid">
-  <!-- โซนซ้าย: ธีมสีส้ม (หน้าขายของ) -->
+  <!-- ส่วนที่ 1: โซนซ้าย ธีมสีส้ม (หน้าขายของ) -->
   <div class="game-window window-orange">
-    <!-- หัวกล่อง -->
     <div class="window-header">
-      <div class="header-left">
-        <span>🏪</span> หน้าขายของ
-      </div>
+      <div class="header-left"><span>🏪</span> หน้าขายของ</div>
       <div class="header-right">
         <div class="coin-box">🪙 <span id="windowCash1">0</span></div>
-        <button class="close-btn">X</button>
       </div>
     </div>
-    <!-- เนื้อหาด้านใน -->
     <div class="window-body">
       <div class="card">
         <h3>🚚 รถขายของของฉัน</h3>
@@ -577,24 +573,31 @@
     </div>
   </div>
 
-  <!-- โซนขวา: ธีมสีฟ้า (หน้าซื้อของ) -->
+  <!-- ส่วนที่ 2: โซนกลาง ธีมสีฟ้า (หน้าซื้อของจากระบบ) -->
   <div class="game-window window-blue">
-    <!-- หัวกล่อง -->
     <div class="window-header">
-      <div class="header-left">
-        <span>🛒</span> หน้าซื้อของ
-      </div>
+      <div class="header-left"><span>🏭</span> ซื้อจากส่วนกลาง</div>
       <div class="header-right">
         <div class="coin-box">🪙 <span id="windowCash2">0</span></div>
-        <button class="close-btn">X</button>
       </div>
     </div>
-    <!-- เนื้อหาด้านใน -->
     <div class="window-body">
       <div class="card">
         <h3>🏭 ซื้อจากซัพพลายเออร์กลาง</h3>
         <div id="supplierList"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 3 (ใหม่): โซนขวา ธีมสีเขียว (ตลาดกลาง) -->
+  <div class="game-window window-green">
+    <div class="window-header">
+      <div class="header-left"><span>🛒</span> ตลาดกลาง</div>
+      <div class="header-right">
+        <div class="coin-box">🪙 <span id="windowCash3">0</span></div>
+      </div>
+    </div>
+    <div class="window-body">
       <div class="card">
         <h3>🛍️ ตลาดกลาง (แผงค้าของเพื่อน ๆ) <span id="marketShopCount"></span></h3>
         <div id="marketList" class="stall-grid"></div>
@@ -744,6 +747,7 @@ function render(s){
   document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
   document.getElementById('windowCash1').textContent = Math.round(s.student.cash).toLocaleString();
   document.getElementById('windowCash2').textContent = Math.round(s.student.cash).toLocaleString();
+  document.getElementById('windowCash3').textContent = Math.round(s.student.cash).toLocaleString();
   const timerBox = document.getElementById('timerBox');
   timerBox.textContent = fmtTime(s.timeLeftSeconds);
   timerBox.classList.toggle('low', s.timeLeftSeconds !== null && s.timeLeftSeconds < 60);
