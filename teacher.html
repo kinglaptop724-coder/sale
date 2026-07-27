@@ -306,6 +306,25 @@
     box-shadow: 0 4px 0 var(--gold-dark);
     min-width: 48px; text-align: center;
   }
+  /* จำกัดความสูงของรายการสินค้าและธุรกรรม และเพิ่มแถบเลื่อนในหน้าครู */
+  #supplierList, #txList {
+    max-height: 55vh; 
+    overflow-y: auto; 
+    padding-right: 6px; 
+  }
+
+  /* ตกแต่งแถบเลื่อน (Scrollbar) */
+  #supplierList::-webkit-scrollbar, #txList::-webkit-scrollbar {
+    width: 6px;
+  }
+  #supplierList::-webkit-scrollbar-track, #txList::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05); 
+    border-radius: 10px;
+  }
+  #supplierList::-webkit-scrollbar-thumb, #txList::-webkit-scrollbar-thumb {
+    background: #7abdf4; /* ใช้สีฟ้าให้เข้ากับธีมของหน้าต่าง */
+    border-radius: 10px;
+  }
 </style>
 </head>
 <body>
