@@ -50,7 +50,7 @@ function setupCore() {
   config.getRange('A1:B10').setValues([
     ['KEY', 'VALUE'],
     ['GAME_NAME', 'ตลาดนัดนักเรียน'],
-    ['JOIN_CODE', '1234'],
+    ['JOIN_CODE', 'ROOM1'],
     ['START_CASH', 1000],
     ['ROUND_MINUTES', 30],
     ['GAME_STARTED_AT', ''],
