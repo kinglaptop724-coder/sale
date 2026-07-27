@@ -42,7 +42,7 @@ function getTruckStyle(styleId) {
 }
 
 // ---------- SETUP ----------
-function setup() {
+function setupCore() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const config = getOrCreateSheet(ss, SHEETS.CONFIG);
@@ -91,7 +91,10 @@ function setup() {
   const shops = getOrCreateSheet(ss, SHEETS.SHOPS);
   shops.clear();
   shops.getRange('A1:E1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt']]);
+}
 
+function setup() {
+  setupCore();
   SpreadsheetApp.getUi().alert('ติดตั้งเสร็จแล้ว! ไปที่ Deploy > New deployment เพื่อสร้าง Web App URL');
 }
 
@@ -111,14 +114,22 @@ function onOpen() {
     .addToUi();
 }
 
-function startGame() {
+function startGameCore() {
   setConfig('GAME_STARTED_AT', new Date().toISOString());
   setConfig('GAME_ENDED', 'FALSE');
+}
+
+function endGameCore() {
+  setConfig('GAME_ENDED', 'TRUE');
+}
+
+function startGame() {
+  startGameCore();
   SpreadsheetApp.getUi().alert('เริ่มเกมแล้ว!');
 }
 
 function endGame() {
-  setConfig('GAME_ENDED', 'TRUE');
+  endGameCore();
   SpreadsheetApp.getUi().alert('จบเกมแล้ว!');
 }
 
@@ -157,6 +168,9 @@ function doPost(e) {
       case 'join': result = handleJoin(body); break;
       case 'state': result = handleState(body); break;
       case 'teacherState': result = handleTeacherState(body); break;
+      case 'teacherStart': result = handleTeacherStart(body); break;
+      case 'teacherEnd': result = handleTeacherEnd(body); break;
+      case 'teacherReset': result = handleTeacherReset(body); break;
       case 'buyFromSupplier': result = handleBuyFromSupplier(body); break;
       case 'openShop': result = handleOpenShop(body); break;
       case 'updateShop': result = handleUpdateShop(body); break;
@@ -481,6 +495,27 @@ function handleTeacherState(body) {
     players,
     recentTx
   };
+}
+
+function handleTeacherStart(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  startGameCore();
+  return handleTeacherState(body);
+}
+
+function handleTeacherEnd(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  endGameCore();
+  return handleTeacherState(body);
+}
+
+function handleTeacherReset(body) {
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+  if (String(body.confirm || '') !== 'RESET') return { error: 'ต้องยืนยันการรีเซ็ตก่อน' };
+  setupCore();
+  // หมายเหตุ: setupCore() ตั้ง TEACHER_KEY กลับเป็นค่าเริ่มต้น (teacher123) เสมอ
+  // จึงไม่เรียก handleTeacherState ต่อ เพราะ key เดิมที่ใช้ล็อกอินจะไม่ตรงกับ key ใหม่แล้ว
+  return { ok: true, reset: true, message: 'รีเซ็ตข้อมูลเรียบร้อยแล้ว รหัสครูถูกตั้งกลับเป็นค่าเริ่มต้น' };
 }
 
 function handleBuyFromSupplier(body) {
