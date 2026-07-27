@@ -306,26 +306,43 @@
     border-top:none;
     padding:14px 10px 10px;
   }
+  /* จัดระเบียบกล่องสินค้าใหม่ให้กว้างขึ้นและไม่อึดอัด */
   .truck-goods{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
-    gap:8px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(115px,1fr)); /* ขยายความกว้างขั้นต่ำของกล่อง */
+    gap:12px; /* เพิ่มระยะห่างระหว่างกล่องแต่ละใบ */
   }
   .truck-good{
-    background:#fff;border-radius:10px;padding:8px 7px 7px;
+    background:#fff;border-radius:10px;
+    padding:12px 10px; /* เพิ่มพื้นที่ว่างด้านใน (Padding) บนล่าง ซ้ายขวา */
     font-size:0.85rem;border:2px solid var(--line);
     display:flex;flex-direction:column;align-items:center;text-align:center;
     box-shadow:2px 2px 0 rgba(0,0,0,0.15);
+    justify-content:space-between; /* ดันเนื้อหาให้กระจายตัวเต็มความสูงของกล่อง */
   }
-  .truck-good-top{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:6px;}
+  .truck-good-top{
+    display:flex;flex-direction:column;align-items:center;
+    gap:6px; /* เพิ่มระยะห่างระหว่าง รูป, ชื่อ, และราคา */
+    margin-bottom:12px;
+    width: 100%;
+  }
   .truck-good-emoji{
-    font-size:1.9rem;line-height:1;
-    background:var(--cream-2);border:2px solid var(--line);border-radius:8px;padding:5px 8px;margin-bottom:2px;
+    font-size:2rem;line-height:1;
+    background:var(--cream-2);border:2px solid var(--line);border-radius:8px;
+    padding:8px;margin-bottom:2px;
   }
-  .truck-good-name{font-size:0.74rem;font-weight:700;line-height:1.2;}
-  .truck-good-price{margin-top:1px;}
-  .truck-good-controls{display:flex;gap:4px;align-items:center;justify-content:center;width:100%;}
-  .truck-good-controls .qty-input{width:38px;padding:5px 4px;}
-  .truck-good-controls .btn{padding:6px 8px;font-size:0.72rem;}
+  .truck-good-name{font-size:0.8rem;font-weight:700;line-height:1.2;}
+  .truck-good-price{margin-top:2px;}
+  .truck-good-controls{
+    display:flex;gap:6px;align-items:center;justify-content:center;width:100%;
+  }
+  .truck-good-controls .qty-input{
+    width:44px;padding:6px 4px;text-align:center; /* ขยายช่องกรอกตัวเลขเล็กน้อย */
+  }
+  .truck-good-controls .btn{
+    padding:7px 10px;font-size:0.75rem;
+    flex: 1; /* บังคับให้ปุ่มซื้อขยายเต็มพื้นที่ที่เหลือ เพื่อความสวยงาม */
+  }
   .truck-empty-note{color:var(--wood-dark);font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
 
   /* เคาน์เตอร์ไม้ด้านล่างแผง แทนล้อรถ */
