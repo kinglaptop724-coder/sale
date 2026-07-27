@@ -29,20 +29,21 @@
     --red-dark: #c73a32;
     --line: #2c1c0d;
     --line-soft: rgba(44,28,13,0.25);
+    /* ปรับฟอนต์เป็น Kanit และจัดตัวเลขให้ตรงกัน */
     --pixel-font: 'Kanit', 'Segoe UI', sans-serif;
-    font-variant-numeric: tabular-nums; /* เพิ่มบรรทัดนี้เพื่อให้ตัวเลขตรงกันพอดี */
     font-family: 'Kanit', 'Segoe UI', sans-serif;
+    font-variant-numeric: tabular-nums;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
-    /* เปลี่ยนสีพื้นหลังและเพิ่มลายตาราง */
+    /* เปลี่ยนสีพื้นหลังเป็นลายตาราง */
     background-color: #f4f5f7; 
     background-image: 
       linear-gradient(#e2e4e9 1px, transparent 1px),
       linear-gradient(90deg, #e2e4e9 1px, transparent 1px);
-    background-size: 20px 20px; /* ขนาดของช่องตาราง */
+    background-size: 20px 20px;
     background-position: center top;
     
     color: var(--ink);
@@ -277,6 +278,24 @@
   .btn-shop, .btn-edit-shop, .btn-logout, .modal-close,
   .pill, .cash, .timer, .badge {
     border-radius: 10px !important;
+  }
+  /* ปรับขอบโค้งมน 10px ให้ทุกกล่องและปุ่มเหมือนหน้า Index */
+  .btn, button, #login button, .btn-logout,
+  .pill, .kpi, .card, .modal, .modal input, #login input,
+  .leaderboard-row, .item-row {
+    border-radius: 10px !important;
+  }
+
+  /* ปรับป้ายราคาในหน้าครูให้เป็นกล่องสีเหลืองแบบเดียวกับหน้านักเรียน */
+  .item-price {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit; font-weight: 800; font-size: 0.88rem;
+    background: linear-gradient(180deg,#ffe27a,var(--gold));
+    color: var(--ink);
+    padding: 7px 12px; border-radius: 10px !important;
+    border: 2px solid var(--line);
+    box-shadow: 0 4px 0 var(--gold-dark);
+    min-width: 48px; text-align: center;
   }
 </style>
 </head>
@@ -602,7 +621,7 @@ function render(s){
   supplierList.innerHTML = (s.supplierItems || []).map(it => `<div class="item-row">
     <span class="emoji">${it.emoji}</span>
     <span class="item-name">${esc(it.itemName)}</span>
-    <span class="item-price">฿${it.price}</span>
+    <span class="item-price">${it.price}</span>
   </div>`).join('');
 
   // Top items
