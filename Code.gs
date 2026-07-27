@@ -24,8 +24,22 @@ const SHEETS = {
   STUDENTS: 'Students',
   INVENTORY: 'Inventory',
   LISTINGS: 'Listings',
-  TRANSACTIONS: 'Transactions'
+  TRANSACTIONS: 'Transactions',
+  SHOPS: 'Shops'
 };
+
+// ---------- TRUCK STYLES (ธีมรถขายของให้นักเรียนเลือก) ----------
+const TRUCK_STYLES = [
+  { id: 'red',    label: 'คลาสสิกแดง',     emoji: '🚚', colorA: '#d1453a', colorB: '#f7ded9' },
+  { id: 'green',  label: 'สวนผลไม้เขียว',   emoji: '🚐', colorA: '#2f8f6f', colorB: '#dcf3e9' },
+  { id: 'pink',   label: 'ขนมหวานชมพู',    emoji: '🍦', colorA: '#c94f8a', colorB: '#f8dfec' },
+  { id: 'blue',   label: 'ทะเลฟ้าคราม',    emoji: '🚛', colorA: '#3f6fbf', colorB: '#dde7f7' },
+  { id: 'gold',   label: 'หรูหราทอง',      emoji: '🛻', colorA: '#c98a2c', colorB: '#f8ecd6' },
+  { id: 'purple', label: 'ราตรีม่วง',      emoji: '🚙', colorA: '#7f5aa2', colorB: '#ecdff5' }
+];
+function getTruckStyle(styleId) {
+  return TRUCK_STYLES.find(t => t.id === styleId) || TRUCK_STYLES[0];
+}
 
 // ---------- SETUP ----------
 function setup() {
@@ -33,7 +47,7 @@ function setup() {
 
   const config = getOrCreateSheet(ss, SHEETS.CONFIG);
   config.clear();
-  config.getRange('A1:B8').setValues([
+  config.getRange('A1:B10').setValues([
     ['KEY', 'VALUE'],
     ['GAME_NAME', 'ตลาดนัดนักเรียน'],
     ['JOIN_CODE', 'ROOM1'],
@@ -41,7 +55,9 @@ function setup() {
     ['ROUND_MINUTES', 30],
     ['GAME_STARTED_AT', ''],
     ['GAME_ENDED', 'FALSE'],
-    ['LISTING_FEE_PERCENT', 0]
+    ['LISTING_FEE_PERCENT', 0],
+    ['TRUCK_COST', 150],
+    ['TEACHER_KEY', 'teacher123']
   ]);
 
   const items = getOrCreateSheet(ss, SHEETS.ITEMS);
@@ -71,6 +87,10 @@ function setup() {
   const tx = getOrCreateSheet(ss, SHEETS.TRANSACTIONS);
   tx.clear();
   tx.getRange('A1:H1').setValues([['id', 'time', 'buyerId', 'buyerName', 'sellerId', 'sellerName', 'itemName', 'qtyPriceTotal']]);
+
+  const shops = getOrCreateSheet(ss, SHEETS.SHOPS);
+  shops.clear();
+  shops.getRange('A1:E1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt']]);
 
   SpreadsheetApp.getUi().alert('ติดตั้งเสร็จแล้ว! ไปที่ Deploy > New deployment เพื่อสร้าง Web App URL');
 }
@@ -136,7 +156,10 @@ function doPost(e) {
     switch (action) {
       case 'join': result = handleJoin(body); break;
       case 'state': result = handleState(body); break;
+      case 'teacherState': result = handleTeacherState(body); break;
       case 'buyFromSupplier': result = handleBuyFromSupplier(body); break;
+      case 'openShop': result = handleOpenShop(body); break;
+      case 'updateShop': result = handleUpdateShop(body); break;
       case 'listForSale': result = handleListForSale(body); break;
       case 'cancelListing': result = handleCancelListing(body); break;
       case 'buyListing': result = handleBuyListing(body); break;
@@ -251,6 +274,57 @@ function removeInventory(studentId, itemName, qty) {
   return existing.avgCost;
 }
 
+// ---------- SHOP (รถขายของ) HELPERS ----------
+// สร้างชีต Shops อัตโนมัติถ้ายังไม่มี (กรณีอัปเดตโค้ดโดยไม่ได้รัน setup() ใหม่ เพื่อไม่ให้ข้อมูลเกมเดิมหาย)
+function ensureShopsSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(SHEETS.SHOPS);
+  if (!sh) {
+    sh = ss.insertSheet(SHEETS.SHOPS);
+    sh.getRange('A1:E1').setValues([['studentId', 'shopName', 'styleId', 'isOpen', 'openedAt']]);
+  }
+  return sh;
+}
+
+function getTruckCost() {
+  const cfg = getConfigMap();
+  const n = Number(cfg.TRUCK_COST);
+  return (cfg.TRUCK_COST === undefined || cfg.TRUCK_COST === '' || isNaN(n)) ? 150 : n;
+}
+
+function getTeacherKey() {
+  const cfg = getConfigMap();
+  return (cfg.TEACHER_KEY === undefined || cfg.TEACHER_KEY === '') ? 'teacher123' : String(cfg.TEACHER_KEY);
+}
+
+function getShop(studentId) {
+  const shops = rowsToObjects(ensureShopsSheet());
+  return shops.find(s => s.studentId === studentId);
+}
+
+function isShopOpen(shop) {
+  return !!shop && shop.isOpen === 'TRUE';
+}
+
+function saveShop(studentId, shopName, styleId, isOpen) {
+  const sh = ensureShopsSheet();
+  const rows = rowsToObjects(sh);
+  const existing = rows.find(r => r.studentId === studentId);
+  const openedAt = (existing && existing.openedAt) ? existing.openedAt : new Date().toISOString();
+  if (existing) {
+    sh.getRange(existing._row, 1, 1, 5).setValues([[studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt]]);
+  } else {
+    sh.appendRow([studentId, shopName, styleId, isOpen ? 'TRUE' : 'FALSE', openedAt]);
+  }
+}
+
+function getAllShopsMap() {
+  const shops = rowsToObjects(ensureShopsSheet());
+  const map = {};
+  shops.forEach(s => { map[s.studentId] = s; });
+  return map;
+}
+
 // ---------- ACTION HANDLERS ----------
 function handleJoin(body) {
   const cfg = getConfigMap();
@@ -276,6 +350,8 @@ function handleState(body) {
   const priceMap = getSupplierPriceMap();
   const inventory = getInventory(body.studentId);
   const allListings = rowsToObjects(sheet(SHEETS.LISTINGS)).filter(l => l.qty > 0);
+  const shopsMap = getAllShopsMap();
+  const myShop = shopsMap[body.studentId];
 
   // มูลค่าสุทธิ = เงินสด + มูลค่าสต๊อกตามราคาตลาดปัจจุบัน
   const students = rowsToObjects(sheet(SHEETS.STUDENTS));
@@ -311,8 +387,99 @@ function handleState(body) {
     myListings: allListings.filter(l => l.sellerId === body.studentId)
       .map(l => ({ id: l.id, itemName: l.itemName, qty: l.qty, price: l.price })),
     market: allListings.filter(l => l.sellerId !== body.studentId)
-      .map(l => ({ id: l.id, sellerName: l.sellerName, itemName: l.itemName, qty: l.qty, price: l.price })),
-    leaderboard: leaderboard.slice(0, 15)
+      .map(l => {
+        const sellerShop = shopsMap[l.sellerId];
+        return {
+          id: l.id,
+          sellerId: l.sellerId,
+          sellerName: l.sellerName,
+          shopName: (sellerShop && sellerShop.isOpen === 'TRUE') ? sellerShop.shopName : ('แผง' + l.sellerName),
+          styleId: (sellerShop && sellerShop.isOpen === 'TRUE') ? sellerShop.styleId : null,
+          itemName: l.itemName, qty: l.qty, price: l.price
+        };
+      }),
+    leaderboard: leaderboard.slice(0, 15),
+    truckCost: getTruckCost(),
+    truckStyles: TRUCK_STYLES,
+    myShop: {
+      opened: isShopOpen(myShop),
+      name: myShop ? myShop.shopName : '',
+      styleId: myShop ? myShop.styleId : TRUCK_STYLES[0].id
+    }
+  };
+}
+
+function handleTeacherState(body) {
+  const cfg = getConfigMap();
+  if (String(body.key || '') !== getTeacherKey()) return { error: 'รหัสครูไม่ถูกต้อง' };
+
+  const students = rowsToObjects(sheet(SHEETS.STUDENTS));
+  const invAll = rowsToObjects(sheet(SHEETS.INVENTORY));
+  const listingsAll = rowsToObjects(sheet(SHEETS.LISTINGS)).filter(l => l.qty > 0);
+  const shopsMap = getAllShopsMap();
+  const priceMap = getSupplierPriceMap();
+  const txAll = rowsToObjects(sheet(SHEETS.TRANSACTIONS));
+
+  const players = students.map(s => {
+    const myInv = invAll.filter(i => i.studentId === s.id && i.qty > 0);
+    const invValue = myInv.reduce((sum, i) => sum + (i.qty * (priceMap[i.itemName] || 0)), 0);
+    const myListingsValue = listingsAll.filter(l => l.sellerId === s.id)
+      .reduce((sum, l) => sum + (l.qty * l.price), 0);
+    const shop = shopsMap[s.id];
+    return {
+      name: s.name,
+      cash: Math.round(s.cash),
+      netWorth: Math.round(s.cash + invValue + myListingsValue),
+      itemsHeld: myInv.reduce((sum, i) => sum + i.qty, 0),
+      shopOpen: isShopOpen(shop),
+      shopName: shop ? shop.shopName : '',
+      joinedAt: s.joinedAt
+    };
+  }).sort((a, b) => b.netWorth - a.netWorth);
+
+  // ยอดขายรวมและจำนวนธุรกรรม
+  let totalVolume = 0;
+  txAll.forEach(t => {
+    const m = String(t.qtyPriceTotal).match(/=\s*([\d.]+)\s*$/);
+    if (m) totalVolume += Number(m[1]);
+  });
+
+  // ยอดขายแยกตามสินค้า (จำนวนที่ขายได้ทั้งหมด)
+  const itemVolume = {};
+  txAll.forEach(t => {
+    itemVolume[t.itemName] = (itemVolume[t.itemName] || 0) + 1;
+  });
+  const topItems = Object.entries(itemVolume)
+    .map(([itemName, count]) => ({ itemName, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+
+  const recentTx = txAll.slice(-25).reverse().map(t => ({
+    time: t.time, buyerName: t.buyerName, sellerName: t.sellerName,
+    itemName: t.itemName, detail: t.qtyPriceTotal
+  }));
+
+  let timeLeftSeconds = null;
+  if (cfg.GAME_STARTED_AT) {
+    const started = new Date(cfg.GAME_STARTED_AT).getTime();
+    const elapsedSec = (Date.now() - started) / 1000;
+    timeLeftSeconds = Math.max(0, Math.round(cfg.ROUND_MINUTES * 60 - elapsedSec));
+  }
+
+  return {
+    gameName: cfg.GAME_NAME,
+    joinCode: cfg.JOIN_CODE,
+    gameStarted: !!cfg.GAME_STARTED_AT,
+    gameEnded: cfg.GAME_ENDED === 'TRUE' || (timeLeftSeconds !== null && timeLeftSeconds <= 0),
+    timeLeftSeconds,
+    playerCount: students.length,
+    shopsOpenCount: Object.values(shopsMap).filter(isShopOpen).length,
+    totalTransactions: txAll.length,
+    totalVolume: Math.round(totalVolume),
+    supplierItems: getSupplierItems(),
+    topItems,
+    players,
+    recentTx
   };
 }
 
@@ -334,12 +501,50 @@ function handleBuyFromSupplier(body) {
   return { ok: true, spent: total, unitPrice };
 }
 
+function handleOpenShop(body) {
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+
+  const shopName = String(body.shopName || '').trim();
+  if (!shopName) return { error: 'ตั้งชื่อร้านด้วยนะ' };
+  if (shopName.length > 24) return { error: 'ชื่อร้านยาวไปหน่อย (ไม่เกิน 24 ตัวอักษร)' };
+
+  const style = getTruckStyle(body.styleId);
+  const existing = getShop(student.id);
+  if (isShopOpen(existing)) return { error: 'เธอเปิดร้านไปแล้วนะ' };
+
+  const cost = getTruckCost();
+  if (student.cash < cost) return { error: 'เงินไม่พอซื้อรถขายของ (ต้องมี ' + cost + ' บ.)' };
+
+  updateStudentCash(student.id, student.cash - cost);
+  saveShop(student.id, shopName, style.id, true);
+  return { ok: true, spent: cost, shop: { name: shopName, styleId: style.id, opened: true } };
+}
+
+function handleUpdateShop(body) {
+  const student = findStudent(body.studentId);
+  if (!student) return { error: 'ไม่พบผู้เล่น' };
+
+  const existing = getShop(student.id);
+  if (!isShopOpen(existing)) return { error: 'ต้องเปิดร้านก่อนถึงจะแก้ไขได้' };
+
+  const shopName = String(body.shopName || '').trim() || existing.shopName;
+  if (shopName.length > 24) return { error: 'ชื่อร้านยาวไปหน่อย (ไม่เกิน 24 ตัวอักษร)' };
+  const style = getTruckStyle(body.styleId || existing.styleId);
+
+  saveShop(student.id, shopName, style.id, true);
+  return { ok: true, shop: { name: shopName, styleId: style.id, opened: true } };
+}
+
 function handleListForSale(body) {
   const student = findStudent(body.studentId);
   if (!student) return { error: 'ไม่พบผู้เล่น' };
   const qty = Number(body.qty);
   const price = Number(body.price);
   if (!qty || qty <= 0 || !price || price <= 0) return { error: 'ข้อมูลไม่ถูกต้อง' };
+
+  const shop = getShop(student.id);
+  if (!isShopOpen(shop)) return { error: 'ต้องเปิดร้านรถขายของก่อนถึงจะวางขายได้ (ดูการ์ด "รถขายของของฉัน")' };
 
   removeInventory(student.id, body.itemName, qty); // จะ throw ถ้าของไม่พอ
   const sh = sheet(SHEETS.LISTINGS);
