@@ -194,8 +194,8 @@
   .lb-worth{font-weight:700;color:var(--lantern);z-index:1;}
 
   .stall-grid{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
-    gap:30px 18px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:34px 18px;
   }
   .truck{
     position:relative;
@@ -205,55 +205,83 @@
   }
   .truck:hover{transform:translateY(-2px);}
 
+  /* หลังคาผ้าใบลายทาง แบบแผงขายของ */
   .truck-header{
+    position:relative;
     display:flex;align-items:center;gap:8px;
-    background:var(--truck-a);
-    filter:brightness(0.95);
-    border-radius:14px 14px 4px 4px;
-    padding:8px 11px;
+    background:repeating-linear-gradient(
+      100deg,
+      var(--truck-a) 0px, var(--truck-a) 16px,
+      rgba(255,255,255,0.92) 16px, rgba(255,255,255,0.92) 28px
+    );
+    border-radius:14px 14px 0 0;
+    padding:9px 11px 12px;
     border:1px solid rgba(0,0,0,0.25);
     border-bottom:none;
   }
+  /* ขอบหลังคาหยักเป็นลอน */
+  .truck-header::after{
+    content:'';
+    position:absolute; left:0; right:0; bottom:-7px; height:14px;
+    background-image: radial-gradient(circle at 9px 0, transparent 8px, var(--truck-a) 9px);
+    background-size:18px 14px;
+    background-repeat:repeat-x;
+    filter:brightness(0.95);
+  }
   .truck-emoji-badge{
     width:32px;height:32px;border-radius:50%;
-    background:rgba(255,255,255,0.28);
+    background:rgba(255,255,255,0.35);
     display:flex;align-items:center;justify-content:center;
-    font-size:1.15rem;border:2px solid rgba(255,255,255,0.45);
+    font-size:1.15rem;border:2px solid rgba(0,0,0,0.25);
     flex-shrink:0;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3);
   }
-  .truck-name{font-weight:700;font-size:0.85rem;line-height:1.15;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.35);}
-  .truck-tag{font-size:0.68rem;color:rgba(255,255,255,0.82);}
+  .truck-name{font-weight:700;font-size:0.85rem;line-height:1.15;color:#1c1c1c;text-shadow:0 1px 0 rgba(255,255,255,0.35);}
+  .truck-tag{font-size:0.68rem;color:rgba(0,0,0,0.6);}
   .truck-tagline{
+    position:relative;z-index:1;
     font-size:0.72rem;font-style:italic;color:var(--jade);
     background:rgba(12,33,28,0.55);border:1px solid var(--border-soft);border-top:none;
-    padding:5px 10px;text-align:center;
+    padding:9px 10px 5px;text-align:center;
   }
 
+  /* ชั้นวางของ + แผงหน้าร้าน */
   .truck-window{
+    position:relative;z-index:1;
     background: linear-gradient(180deg, var(--truck-b), #ffffff08), var(--panel-2);
     border:1px solid rgba(0,0,0,0.25);
     border-top:none;
-    border-radius:0 0 6px 6px;
-    padding:12px 10px 16px;
+    padding:14px 10px 10px;
     box-shadow: inset 0 3px 6px rgba(0,0,0,0.3);
   }
-  .truck-goods{display:flex;flex-direction:column;gap:8px;}
-  .truck-good{
-    background:rgba(12,33,28,0.8);border-radius:9px;padding:9px 10px;
-    font-size:0.85rem;border:1px solid var(--border-soft);
+  .truck-goods{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+    gap:8px;
   }
-  .truck-good-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-  .truck-good-emoji{font-size:1.4rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));}
-  .truck-good-name{flex:1;font-size:0.82rem;font-weight:500;}
-  .truck-good-controls{display:flex;gap:6px;align-items:center;justify-content:flex-end;}
-  .truck-good-controls .qty-input{width:46px;}
+  .truck-good{
+    background:rgba(12,33,28,0.85);border-radius:9px;padding:8px 7px 7px;
+    font-size:0.85rem;border:1px solid var(--border-soft);
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    box-shadow:0 2px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .truck-good-top{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:6px;}
+  .truck-good-emoji{
+    font-size:1.9rem;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+    background:rgba(255,255,255,0.06);border-radius:8px;padding:5px 8px;margin-bottom:2px;
+  }
+  .truck-good-name{font-size:0.74rem;font-weight:600;line-height:1.2;}
+  .truck-good-price{margin-top:1px;}
+  .truck-good-controls{display:flex;gap:4px;align-items:center;justify-content:center;width:100%;}
+  .truck-good-controls .qty-input{width:38px;padding:5px 4px;}
+  .truck-good-controls .btn{padding:6px 8px;font-size:0.72rem;}
   .truck-empty-note{color:var(--paper);font-size:0.75rem;font-style:italic;padding:4px 0 0;text-align:center;}
 
-  .truck-wheels{display:flex;justify-content:space-around;padding:0 22px;margin-top:-9px;position:relative;z-index:2;}
-  .truck-wheel{
-    width:20px;height:20px;border-radius:50%;
-    background:radial-gradient(circle at 35% 35%, #666, #111 70%);
-    border:3px solid #2b2b2b;
+  /* เคาน์เตอร์ไม้ด้านล่างแผง แทนล้อรถ */
+  .truck-counter{
+    height:16px;border-radius:0 0 8px 8px;
+    background:repeating-linear-gradient(90deg, #7a5230 0 14px, #5e3f24 14px 28px);
+    border:1px solid rgba(0,0,0,0.35);border-top:2px solid rgba(0,0,0,0.25);
+    box-shadow:0 4px 6px rgba(0,0,0,0.35);
   }
 
   .shop-setup-styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;margin:12px 0;}
@@ -741,7 +769,8 @@ function renderMarket(listings, ended){
       <div class="truck-good">
         <div class="truck-good-top">
           <div class="truck-good-emoji">${itemEmoji(l.itemName)}</div>
-          <div class="truck-good-name">${l.itemName} <span class="truck-tag" style="color:#9fb8ae">(เหลือ ${l.qty})</span></div>
+          <div class="truck-good-name">${l.itemName}</div>
+          <div class="truck-tag" style="color:#9fb8ae">เหลือ ${l.qty}</div>
           <div class="truck-good-price price-tag">${l.price} บ.</div>
         </div>
         <div class="truck-good-controls">
@@ -763,7 +792,7 @@ function renderMarket(listings, ended){
         <div class="truck-window">
           <div class="truck-goods">${goodsHtml}</div>
         </div>
-        <div class="truck-wheels"><div class="truck-wheel"></div><div class="truck-wheel"></div></div>
+        <div class="truck-counter"></div>
       </div>
     `;
   }).join('');
