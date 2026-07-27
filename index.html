@@ -36,7 +36,14 @@
   html{scroll-behavior:smooth;}
   body{
     margin:0;
-    background: linear-gradient(180deg, var(--sky), var(--cream) 60%, var(--cream-2));
+    /* เปลี่ยนสีพื้นหลังและเพิ่มลายตาราง */
+    background-color: #f4f5f7; 
+    background-image: 
+      linear-gradient(#e2e4e9 1px, transparent 1px),
+      linear-gradient(90deg, #e2e4e9 1px, transparent 1px);
+    background-size: 20px 20px; /* ขนาดของช่องตาราง */
+    background-position: center top;
+    
     color: var(--ink);
     min-height:100vh;
     padding-bottom:60px;
