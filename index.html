@@ -175,15 +175,15 @@
   .item-name{flex:1;font-weight:600;}
 
   .price-tag{
-    display:inline-flex;align-items:center;gap:4px;
-    font-family:var(--pixel-font);
-    background:linear-gradient(180deg,#fff1b8,var(--gold));color:var(--ink);font-weight:400;font-size:0.72rem;
-    padding:6px 12px;border-radius:20px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:inherit;font-weight:800;font-size:0.88rem;
+    background:linear-gradient(180deg,#ffe27a,var(--gold));
+    color:var(--ink);
+    padding:7px 12px;border-radius:10px; /* โค้งมนเท่ากับปุ่มกด */
     border:2px solid var(--line);
-    position:relative;white-space:nowrap;
-    box-shadow:2px 2px 0 rgba(0,0,0,0.2);
+    box-shadow:0 4px 0 var(--gold-dark); /* ใส่เงาใต้ปุ่มให้ดูมีมิติเหมือนปุ่มซื้อ */
+    min-width:52px;
   }
-  .price-tag::before{content:"🪙";font-family:initial;font-size:0.9em;}
   .item-price{min-width:74px;text-align:right;justify-content:flex-end;}
 
   .qty-input{
@@ -867,7 +867,7 @@ function renderSupplier(items){
     <div class="item-row">
       <div class="emoji">${it.emoji||'📦'}</div>
       <div class="item-name">${it.itemName}</div>
-      <div class="item-price price-tag">${it.price} บ.</div>
+      <div class="item-price price-tag">${it.price}</div>
       <input class="qty-input" type="number" min="1" value="1" id="buyqty_${it.itemName}">
       <button class="btn btn-buy" onclick="buySupplier('${it.itemName}', this)">ซื้อ</button>
     </div>
@@ -941,7 +941,7 @@ function renderMarketGrid(){
           <div class="truck-good-emoji">${itemEmoji(l.itemName)}</div>
           <div class="truck-good-name">${l.itemName}</div>
           <div class="truck-tag" style="color:var(--paper-dim)">เหลือ ${l.qty}</div>
-          <div class="truck-good-price price-tag">${l.price} บ.</div>
+          <div class="truck-good-price price-tag">${l.price}</div>
         </div>
         <div class="truck-good-controls">
           <input class="qty-input" type="number" min="1" max="${l.qty}" value="1" id="buymarket_${l.id}">
@@ -1003,7 +1003,7 @@ function renderMyListings(listings, ended){
   el.innerHTML = listings.map(l => `
     <div class="item-row">
       <div class="item-name">${l.itemName} x${l.qty}</div>
-      <div class="price-tag">${l.price} บ.</div>
+      <div class="price-tag">${l.price}</div>
       <button class="btn btn-cancel" ${ended?'disabled':''} onclick="cancelListing('${l.id}', this)">ยกเลิก</button>
     </div>
   `).join('');
