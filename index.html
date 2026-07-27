@@ -223,6 +223,11 @@
   }
   .truck-name{font-weight:700;font-size:0.85rem;line-height:1.15;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.35);}
   .truck-tag{font-size:0.68rem;color:rgba(255,255,255,0.82);}
+  .truck-tagline{
+    font-size:0.72rem;font-style:italic;color:var(--jade);
+    background:rgba(12,33,28,0.55);border:1px solid var(--border-soft);border-top:none;
+    padding:5px 10px;text-align:center;
+  }
 
   .truck-window{
     background: linear-gradient(180deg, var(--truck-b), #ffffff08), var(--panel-2);
@@ -272,6 +277,7 @@
   .shop-summary .truck-emoji-badge{width:48px;height:48px;font-size:1.6rem;background:var(--panel-2);border-color:var(--border);}
   .shop-summary-info{flex:1;}
   .shop-summary-name{font-weight:700;font-size:1.05rem;}
+  .shop-summary-tagline{font-size:0.8rem;color:var(--jade);font-style:italic;margin:2px 0;}
   .shop-summary-tag{font-size:0.78rem;color:var(--paper-dim);}
   .btn-shop{
     background:linear-gradient(135deg,var(--lantern),var(--ember));color:var(--ink);
@@ -279,6 +285,29 @@
     box-shadow:0 4px 14px rgba(224,105,47,0.3);
   }
   .btn-edit-shop{background:var(--panel-2);border:1px solid var(--border);color:var(--paper);border-radius:10px;}
+
+  /* ===== หน้าต่างจัดการ/ตกแต่งร้านค้า (ป๊อปอัพ) ===== */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:60;display:none;
+    align-items:center;justify-content:center;padding:16px;
+    background:rgba(6,14,12,0.72);backdrop-filter:blur(3px);
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-panel{
+    width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
+    background:linear-gradient(180deg, var(--panel), var(--night-2) 140%);
+    border:1px solid var(--border);border-radius:20px;padding:24px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.5);
+  }
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .modal-header h3{margin:0;font-size:1.1rem;color:var(--lantern);font-weight:700;}
+  .modal-close{
+    background:transparent;border:none;color:var(--paper-dim);font-size:1.2rem;
+    cursor:pointer;line-height:1;padding:4px 6px;border-radius:8px;
+  }
+  .modal-close:hover{color:var(--paper);background:rgba(255,255,255,0.06);}
+  .modal-sub{font-size:0.82rem;color:#9fb8ae;margin:6px 0 16px;}
+  .modal-field-label{font-size:0.75rem;color:var(--paper-dim);margin:10px 0 4px;font-weight:600;letter-spacing:0.2px;}
 
   .empty{
     color:var(--paper-dim);font-size:0.85rem;padding:14px 10px;text-align:center;
@@ -372,6 +401,27 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="shopModalOverlay">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 id="shopModalTitle">🚚 เปิดร้านค้า</h3>
+      <button class="modal-close" onclick="closeShopModal()">✕</button>
+    </div>
+    <p class="modal-sub" id="shopModalIntro"></p>
+
+    <div class="modal-field-label">ชื่อร้าน</div>
+    <input class="shop-name-input" id="shopModalNameInput" maxlength="24" placeholder="เช่น มะม่วงพี่หนึ่ง">
+
+    <div class="modal-field-label">คำโปรยร้าน (ไม่บังคับ)</div>
+    <input class="shop-name-input" id="shopModalTaglineInput" maxlength="40" placeholder="เช่น สดใหม่ทุกวัน ราคาเป็นกันเอง">
+
+    <div class="modal-field-label">ธีมรถขายของ</div>
+    <div class="shop-setup-styles" id="shopModalStyles"></div>
+
+    <button class="btn btn-shop" id="shopModalSubmitBtn" onclick="submitShopModal()"></button>
+  </div>
+</div>
 
 <script>
 // ==========================================================
@@ -476,10 +526,8 @@ function render(s){
 
 let truckStyles = [];
 let truckCost = 0;
-let myShop = { opened: false, name: '', styleId: null };
-let shopFormStyleId = null; // สไตล์ที่เลือกไว้ชั่วคราวในฟอร์ม
-let shopEditing = false;
-let shopNameDraft = null; // เก็บชื่อร้านที่พิมพ์ค้างไว้ ไม่ให้หายตอน poll สถานะทุก 3 วิ
+let myShop = { opened: false, name: '', styleId: null, tagline: '' };
+let shopModalStyleId = null; // สไตล์ที่เลือกไว้ชั่วคราวในหน้าต่างจัดการร้าน
 
 function styleById(id){ return truckStyles.find(t => t.id === id) || truckStyles[0] || {id:'red',label:'',emoji:'🚚',colorA:'#d1453a',colorB:'#f7ded9'}; }
 
@@ -487,107 +535,85 @@ function escapeAttr(str){
   return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 }
 
+// การ์ดสรุปในแถบข้าง เป็นแค่ทางเข้าไปหน้าต่างจัดการร้าน (ป๊อปอัพ) — ไม่มีฟอร์มฝังอยู่ในนี้แล้ว
 function renderShop(shop, cost, styles){
   const el = document.getElementById('shopBox');
   if(!shop) return;
 
-  if(shop.opened && !shopEditing){
-    shopNameDraft = null; // ไม่ได้อยู่ในฟอร์ม ล้าง draft ทิ้ง
+  if(shop.opened){
     const st = styleById(shop.styleId);
     el.innerHTML = `
       <div class="shop-summary">
         <div class="truck-emoji-badge">${st.emoji}</div>
         <div class="shop-summary-info">
           <div class="shop-summary-name">${shop.name}</div>
+          ${shop.tagline ? `<div class="shop-summary-tagline">“${shop.tagline}”</div>` : ''}
           <div class="shop-summary-tag">ธีม: ${st.label}</div>
         </div>
       </div>
-      <button class="btn btn-edit-shop" style="margin-top:10px;width:100%" onclick="startEditShop()">✏️ แก้ไขร้าน/เปลี่ยนธีม</button>
+      <button class="btn btn-edit-shop" style="margin-top:10px;width:100%" onclick="openShopModal()">🎨 จัดการ/ตกแต่งร้านค้า</button>
     `;
-    return;
+  } else {
+    el.innerHTML = `
+      <p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 10px">ยังไม่มีรถขายของ — ต้องเปิดร้านก่อน ถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>
+      <button class="btn btn-shop" style="width:100%" onclick="openShopModal()">🚚 เปิดร้านค้า</button>
+    `;
   }
+}
 
-  // ก่อน re-render ทับ ให้จำข้อความที่พิมพ์ค้างไว้ในกล่องชื่อร้าน (กันหายตอน poll ทุก 3 วิ)
-  const existingInput = document.getElementById('shopNameInput');
-  const hadFocus = existingInput && document.activeElement === existingInput;
-  if(existingInput) shopNameDraft = existingInput.value;
+// ---------- หน้าต่างจัดการ/ตกแต่งร้านค้า (ป๊อปอัพ) ----------
+function openShopModal(){
+  shopModalStyleId = myShop.opened ? myShop.styleId : ((truckStyles[0] && truckStyles[0].id) || 'red');
 
-  // ฟอร์มตั้งร้าน (ครั้งแรก) หรือแก้ไขร้าน
-  if(shopFormStyleId === null){
-    shopFormStyleId = shop.opened ? shop.styleId : (styles[0] && styles[0].id);
-  }
-  const nameValue = shopNameDraft !== null ? shopNameDraft : (shop.opened ? shop.name : '');
-  const intro = shop.opened
-    ? `<p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 6px">แก้ไขชื่อร้าน/ธีมรถได้ฟรี</p>`
-    : `<p style="font-size:0.82rem;color:#9fb8ae;margin:0 0 6px">ต้องมีรถขายของก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${cost} บ.)</p>`;
+  document.getElementById('shopModalTitle').textContent = myShop.opened ? '🎨 จัดการ/ตกแต่งร้านค้า' : '🚚 เปิดร้านค้า';
+  document.getElementById('shopModalIntro').textContent = myShop.opened
+    ? 'แก้ไขชื่อร้าน คำโปรยร้าน และธีมรถขายของได้ฟรี'
+    : `ต้องมีรถขายของก่อนถึงจะวางขายในตลาดกลางได้ (ค่าเปิดร้าน ${truckCost} บ.)`;
+  document.getElementById('shopModalNameInput').value = myShop.opened ? (myShop.name || '') : '';
+  document.getElementById('shopModalTaglineInput').value = myShop.opened ? (myShop.tagline || '') : '';
+  document.getElementById('shopModalSubmitBtn').textContent = myShop.opened ? '💾 บันทึกการแก้ไข' : `🚚 เปิดร้าน (เสียเงิน ${truckCost} บ.)`;
 
-  el.innerHTML = `
-    ${intro}
-    <input class="shop-name-input" id="shopNameInput" maxlength="24" placeholder="ตั้งชื่อร้าน เช่น มะม่วงพี่หนึ่ง" value="${escapeAttr(nameValue)}" oninput="shopNameDraft=this.value">
-    <div class="shop-setup-styles" id="styleChoices">
-      ${styles.map(st => `
-        <div class="style-choice ${st.id===shopFormStyleId?'selected':''}" onclick="selectShopStyle('${st.id}')">
-          <div class="swatch-emoji">${st.emoji}</div>
-          <div>${st.label}</div>
-        </div>
-      `).join('')}
+  renderShopModalStyles();
+  document.getElementById('shopModalOverlay').classList.add('show');
+}
+
+function closeShopModal(){
+  document.getElementById('shopModalOverlay').classList.remove('show');
+}
+
+function renderShopModalStyles(){
+  const el = document.getElementById('shopModalStyles');
+  el.innerHTML = truckStyles.map(st => `
+    <div class="style-choice ${st.id===shopModalStyleId?'selected':''}" onclick="selectModalStyle('${st.id}')">
+      <div class="swatch-emoji">${st.emoji}</div>
+      <div>${st.label}</div>
     </div>
-    <button class="btn btn-shop" onclick="${shop.opened ? 'submitUpdateShop()' : 'submitOpenShop()'}">
-      ${shop.opened ? '💾 บันทึกการแก้ไข' : `🚚 เปิดร้าน (เสียเงิน ${cost} บ.)`}
-    </button>
-    ${shop.opened ? `<button class="btn btn-cancel" style="margin-top:8px;width:100%" onclick="cancelEditShop()">ยกเลิก</button>` : ''}
-  `;
-
-  if(hadFocus){
-    const newInput = document.getElementById('shopNameInput');
-    if(newInput){
-      newInput.focus();
-      const len = newInput.value.length;
-      newInput.setSelectionRange(len, len);
-    }
-  }
+  `).join('');
 }
 
-function selectShopStyle(id){
-  shopFormStyleId = id;
-  renderShop(myShop, truckCost, truckStyles);
+function selectModalStyle(id){
+  shopModalStyleId = id;
+  renderShopModalStyles();
 }
 
-function startEditShop(){
-  shopEditing = true;
-  shopFormStyleId = myShop.styleId;
-  shopNameDraft = null;
-  renderShop(myShop, truckCost, truckStyles);
-}
-
-function cancelEditShop(){
-  shopEditing = false;
-  shopFormStyleId = null;
-  shopNameDraft = null;
-  renderShop(myShop, truckCost, truckStyles);
-}
-
-async function submitOpenShop(){
-  const shopName = document.getElementById('shopNameInput').value.trim();
+async function submitShopModal(){
+  const shopName = document.getElementById('shopModalNameInput').value.trim();
+  const tagline = document.getElementById('shopModalTaglineInput').value.trim();
   if(!shopName){ showToast('ตั้งชื่อร้านก่อนนะ'); return; }
-  const r = await api('openShop', { studentId, shopName, styleId: shopFormStyleId });
+
+  const action = myShop.opened ? 'updateShop' : 'openShop';
+  const r = await api(action, { studentId, shopName, tagline, styleId: shopModalStyleId });
   if(r.error){ showToast(r.error); return; }
-  showToast('เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
-  shopFormStyleId = null;
-  shopNameDraft = null;
+
+  showToast(myShop.opened ? 'บันทึกร้านค้าแล้ว' : 'เปิดร้านสำเร็จ! ยินดีต้อนรับสู่ตลาด 🎉');
+  closeShopModal();
   fetchState();
 }
 
-async function submitUpdateShop(){
-  const shopName = document.getElementById('shopNameInput').value.trim();
-  const r = await api('updateShop', { studentId, shopName, styleId: shopFormStyleId });
-  if(r.error){ showToast(r.error); return; }
-  showToast('บันทึกร้านค้าแล้ว');
-  shopEditing = false;
-  shopFormStyleId = null;
-  shopNameDraft = null;
-  fetchState();
-}
+// ปิดป๊อปอัพเมื่อคลิกพื้นหลังมืดรอบนอกกล่อง
+document.getElementById('shopModalOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'shopModalOverlay') closeShopModal();
+});
 
 
 let itemEmojiMap = {};
@@ -648,11 +674,11 @@ function renderMarket(listings, ended){
   const bySeller = {};
   listings.forEach(l => {
     const key = l.sellerId || l.sellerName;
-    if(!bySeller[key]) bySeller[key] = { sellerName: l.sellerName, shopName: l.shopName, styleId: l.styleId, goods: [] };
+    if(!bySeller[key]) bySeller[key] = { sellerName: l.sellerName, shopName: l.shopName, styleId: l.styleId, shopTagline: l.shopTagline, goods: [] };
     bySeller[key].goods.push(l);
   });
 
-  const html = Object.values(bySeller).map(({sellerName, shopName, styleId, goods}) => {
+  const html = Object.values(bySeller).map(({sellerName, shopName, styleId, shopTagline, goods}) => {
     const st = styleId ? styleById(styleId) : null;
     const emoji = st ? st.emoji : vendorEmoji(sellerName);
     const colorA = st ? st.colorA : vendorPalette(sellerName)[0];
@@ -681,6 +707,7 @@ function renderMarket(listings, ended){
             <div class="truck-tag">โดย ${sellerName} · ${goods.length} รายการ</div>
           </div>
         </div>
+        ${shopTagline ? `<div class="truck-tagline">“${shopTagline}”</div>` : ''}
         <div class="truck-window">
           <div class="truck-goods">${goodsHtml}</div>
         </div>
