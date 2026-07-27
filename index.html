@@ -546,6 +546,14 @@
   .window-body {
     flex: 1 !important;
   }
+  /* จัดระเบียบไอคอน SVG ให้ตรงกับข้อความ */
+  .icon-svg {
+    width: 24px;
+    height: 24px;
+    vertical-align: text-bottom;
+    margin-right: 8px;
+    display: inline-block;
+  }
 </style>
 </head>
 <body>
@@ -942,10 +950,31 @@ function setHtmlPreserveInputs(el, html){
   });
 }
 
+let mySupplierItemNames = null; // ตัวแปรสำหรับจำรายการสินค้า 8 ชิ้นของแต่ละคน
+
 function renderSupplier(items){
   items.forEach(it => itemEmojiMap[it.itemName] = it.emoji || '📦');
   const el = document.getElementById('supplierList');
-  const html = items.map(it => `
+
+  // ใช้ localStorage จำรายการสินค้า 8 ชิ้นของนักเรียนแต่ละคน (กันเด็กรีเฟรชสุ่มใหม่)
+  const storageKey = 'mySupplierItems_' + studentId;
+  let mySupplierItemNames = JSON.parse(localStorage.getItem(storageKey));
+
+  // 1. ถ้ายังไม่เคยสุ่ม ให้สุ่มสินค้า 8 ชิ้นแล้วบันทึกจำไว้ในเครื่องเลย
+  if (!mySupplierItemNames && items.length > 0) {
+    const shuffled = [...items].sort(() => 0.5 - Math.random());
+    mySupplierItemNames = shuffled.slice(0, 8).map(i => i.itemName);
+    localStorage.setItem(storageKey, JSON.stringify(mySupplierItemNames));
+  }
+
+  // 2. กรองรายการสินค้าทั้งหมด ให้เหลือแค่ 8 ชิ้นตามที่สุ่มได้
+  let displayItems = items;
+  if (mySupplierItemNames) {
+    displayItems = items.filter(i => mySupplierItemNames.includes(i.itemName));
+  }
+
+  // 3. สร้างหน้าตาสินค้า 8 ชิ้นลงในกล่อง
+  const html = displayItems.map(it => `
     <div class="item-row">
       <div class="emoji">${it.emoji||'📦'}</div>
       <div class="item-name">${it.itemName}</div>
@@ -954,6 +983,7 @@ function renderSupplier(items){
       <button class="btn btn-buy" onclick="buySupplier('${it.itemName}', this)">ซื้อ</button>
     </div>
   `).join('') || '<div class="empty">ยังไม่มีสินค้า</div>';
+  
   setHtmlPreserveInputs(el, html);
 }
 
