@@ -44,20 +44,18 @@
     font-weight:500;
   }
 
-  .cover-banner{
-    width:100%;
-    max-height:320px;
-    overflow:hidden;
-    border-bottom:5px solid var(--line);
-    box-shadow:0 6px 0 rgba(0,0,0,0.18);
-    position:relative;
-  }
-  .cover-banner img{
-    display:block;width:100%;height:100%;object-fit:cover;object-position:center top;
-  }
-  @media(max-width:700px){
-    .cover-banner{max-height:180px;}
-  }
+  .cover-banner {
+  width: 100%;
+  border-bottom: 5px solid var(--line);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.18);
+  position: relative;
+}
+
+.cover-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
   h1,h2,h3{font-family:inherit;}
   ::selection{background:var(--gold);color:var(--ink);}
   :focus-visible{outline:3px solid var(--navy);outline-offset:2px;border-radius:4px;}
