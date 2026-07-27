@@ -100,6 +100,15 @@
   #login button:active{transform:translateY(0);}
   #login .msg{color:var(--loss);min-height:20px;font-size:0.85rem;margin-top:10px;font-weight:500;}
 
+  .teacher-access{
+    position:fixed;top:14px;right:16px;z-index:20;
+    background:rgba(8,20,17,0.6);border:1px solid var(--border-soft);
+    color:var(--paper-dim);font-family:inherit;font-size:0.78rem;font-weight:500;
+    padding:7px 12px;border-radius:20px;cursor:pointer;
+    backdrop-filter:blur(10px);transition:border-color .15s, color .15s;
+  }
+  .teacher-access:hover{border-color:var(--border);color:var(--paper);}
+
   main{max-width:1100px;margin:0 auto;padding:22px 20px;display:none;}
   main.show{display:block;}
 
@@ -296,6 +305,8 @@
 
 <div class="lightstring"></div>
 
+<button type="button" class="teacher-access" onclick="goTeacher()">👩‍🏫 สำหรับคุณครู</button>
+
 <div id="login">
   <h2>🏮 ตลาดนัดนักเรียน</h2>
   <p class="sub">ซื้อมาขายไป เปิดร้านรถขายของของตัวเอง แล้วไปวัดกันที่กระดานผู้นำ</p>
@@ -385,6 +396,18 @@ async function api(action, payload){
     body: JSON.stringify({ action, ...payload })
   });
   return res.json();
+}
+
+async function goTeacher(){
+  const key = prompt('กรอกรหัสครู (Teacher Key) เพื่อเข้าสู่แดชบอร์ดคุณครู');
+  if(key === null) return; // กดยกเลิก
+  const trimmed = key.trim();
+  if(!trimmed){ showToast('กรุณากรอกรหัสครู'); return; }
+  showToast('กำลังตรวจสอบรหัส...');
+  const r = await api('teacherState', { key: trimmed });
+  if(r.error){ showToast('รหัสไม่ถูกต้อง'); return; }
+  sessionStorage.setItem('marketTeacherKey', trimmed);
+  window.location.href = 'Teacher.html';
 }
 
 async function doJoin(){
