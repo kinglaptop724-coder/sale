@@ -494,6 +494,7 @@ async function doJoin(){
   document.getElementById('login').style.display = 'none';
   document.getElementById('topbar').style.display = 'flex';
   document.getElementById('main').classList.add('show');
+  document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
   startPolling();
 }
 
@@ -518,6 +519,7 @@ async function fetchState(){
     document.getElementById('login').style.display='block';
     document.getElementById('topbar').style.display='none';
     document.getElementById('main').classList.remove('show');
+    document.querySelector('.teacher-access').style.display = '';
     return;
   }
   render(s);
@@ -871,6 +873,7 @@ if(studentId){
   document.getElementById('login').style.display = 'none';
   document.getElementById('topbar').style.display = 'flex';
   document.getElementById('main').classList.add('show');
+  document.querySelector('.teacher-access').style.display = 'none'; // ซ่อนปุ่มครูตอนเข้าเกมแล้ว กันบังจำนวนเงิน
   startPolling();
 }
 </script>
