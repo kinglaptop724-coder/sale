@@ -556,7 +556,7 @@
         <span>🏪</span> หน้าขายของ
       </div>
       <div class="header-right">
-        <div class="coin-box">🪙 12,450 <span>+</span></div>
+        <div class="coin-box">🪙 <span id="windowCash1">0</span></div>
         <button class="close-btn">X</button>
       </div>
     </div>
@@ -585,7 +585,7 @@
         <span>🛒</span> หน้าซื้อของ
       </div>
       <div class="header-right">
-        <div class="coin-box">🪙 12,450 <span>+</span></div>
+        <div class="coin-box">🪙 <span id="windowCash2">0</span></div>
         <button class="close-btn">X</button>
       </div>
     </div>
@@ -742,6 +742,8 @@ function render(s){
   document.getElementById('gameNameLabel').textContent = s.gameName;
   document.getElementById('myAvatarLabel').textContent = vendorEmoji(s.student.name);
   document.getElementById('cashLabel').textContent = Math.round(s.student.cash).toLocaleString();
+  document.getElementById('windowCash1').textContent = Math.round(s.student.cash).toLocaleString();
+  document.getElementById('windowCash2').textContent = Math.round(s.student.cash).toLocaleString();
   const timerBox = document.getElementById('timerBox');
   timerBox.textContent = fmtTime(s.timeLeftSeconds);
   timerBox.classList.toggle('low', s.timeLeftSeconds !== null && s.timeLeftSeconds < 60);
