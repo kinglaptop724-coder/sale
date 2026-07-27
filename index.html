@@ -457,7 +457,7 @@ async function goTeacher(){
   const r = await api('teacherState', { key: trimmed });
   if(r.error){ showToast('รหัสไม่ถูกต้อง'); return; }
   sessionStorage.setItem('marketTeacherKey', trimmed);
-  window.location.href = 'Teacher.html';
+  window.location.href = 'teacher.html';
 }
 
 async function doJoin(){
