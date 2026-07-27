@@ -512,6 +512,25 @@
   .pill, .cash, .timer, .badge {
     border-radius: 10px !important;
   }
+  /* จำกัดความสูงของรายการสินค้าซัพพลายเออร์ และเพิ่มแถบเลื่อน */
+  #supplierList {
+    max-height: 55vh; /* จำกัดความสูงไม่เกิน 55% ของหน้าจอ */
+    overflow-y: auto; /* ให้มีแถบเลื่อนแนวตั้งเมื่อเนื้อหายาวเกิน */
+    padding-right: 6px; /* เว้นระยะขวาไม่ให้เนื้อหาชิดแถบเลื่อนเกินไป */
+  }
+
+  /* ตกแต่งแถบเลื่อน (Scrollbar) ให้สวยงามเข้ากับธีมเกม */
+  #supplierList::-webkit-scrollbar {
+    width: 6px;
+  }
+  #supplierList::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05); 
+    border-radius: 10px;
+  }
+  #supplierList::-webkit-scrollbar-thumb {
+    background: #7abdf4; /* ใช้สีฟ้าให้เข้ากับธีมกล่อง */
+    border-radius: 10px;
+  }
 </style>
 </head>
 <body>
