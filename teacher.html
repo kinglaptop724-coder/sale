@@ -246,6 +246,32 @@
   }
   .modal-actions{display:flex;gap:8px;}
   .modal-actions .btn{flex:1;}
+  /* ===== สไตล์หน้าต่างแบบหน้า Index ===== */
+  .game-window {
+    border: 4px solid #2b3658; 
+    border-radius: 12px;
+    overflow: hidden; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .window-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 4px solid #2b3658;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #1a1a1a;
+  }
+  .window-header span { margin-right: 8px; font-size: 1.3rem; }
+  .window-body {
+    padding: 16px;
+    min-height: 100%;
+  }
+  /* ธีมสีส้มและสีฟ้า */
+  .window-orange .window-header { background-color: #f69c76; } 
+  .window-orange .window-body { background-color: #faeed4; } 
+  .window-blue .window-header { background-color: #7abdf4; } 
+  .window-blue .window-body { background-color: #e5f0fa; }
 </style>
 </head>
 <body>
@@ -296,37 +322,49 @@
   </div>
 
   <div class="grid">
-    <div>
-      <div class="card">
-        <h3>🏆 อันดับความมั่งคั่ง (เงินสด + มูลค่าสต๊อก)</h3>
-        <div id="leaderboard"></div>
+    <!-- โซนซ้าย: หน้าต่างสีส้ม (ข้อมูลผู้เล่น) -->
+    <div class="game-window window-orange">
+      <div class="window-header">
+        <span>🧑‍🎓</span> สรุปข้อมูลผู้เล่น
       </div>
+      <div class="window-body">
+        <div class="card">
+          <h3>🏆 อันดับความมั่งคั่ง (เงินสด + มูลค่าสต๊อก)</h3>
+          <div id="leaderboard"></div>
+        </div>
 
-      <div class="card">
-        <h3>👥 รายชื่อผู้เล่นทั้งหมด</h3>
-        <div style="overflow-x:auto;">
-          <table id="playersTable">
-            <thead><tr><th>ชื่อ</th><th class="num">เงินสด</th><th class="num">มูลค่าสุทธิ</th><th class="num">ของในสต๊อก</th><th>ร้านค้า</th></tr></thead>
-            <tbody id="playersBody"></tbody>
-          </table>
+        <div class="card">
+          <h3>👥 รายชื่อผู้เล่นทั้งหมด</h3>
+          <div style="overflow-x:auto;">
+            <table id="playersTable">
+              <thead><tr><th>ชื่อ</th><th class="num">เงินสด</th><th class="num">มูลค่าสุทธิ</th><th class="num">ของในสต๊อก</th><th>ร้านค้า</th></tr></thead>
+              <tbody id="playersBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
-    <div>
-      <div class="card">
-        <h3>📈 ราคาสินค้าจากส่วนกลาง (ตอนนี้)</h3>
-        <div id="supplierList"></div>
+    <!-- โซนขวา: หน้าต่างสีฟ้า (ข้อมูลตลาด) -->
+    <div class="game-window window-blue">
+      <div class="window-header">
+        <span>📊</span> สรุปข้อมูลตลาด
       </div>
+      <div class="window-body">
+        <div class="card">
+          <h3>📈 ราคาสินค้าจากส่วนกลาง (ตอนนี้)</h3>
+          <div id="supplierList"></div>
+        </div>
 
-      <div class="card">
-        <h3>🔥 สินค้าขายดี (จำนวนครั้งที่ขายได้)</h3>
-        <div id="topItems"></div>
-      </div>
+        <div class="card">
+          <h3>🔥 สินค้าขายดี (จำนวนครั้งที่ขายได้)</h3>
+          <div id="topItems"></div>
+        </div>
 
-      <div class="card">
-        <h3>🧾 ธุรกรรมล่าสุด</h3>
-        <div id="txList"></div>
+        <div class="card">
+          <h3>🧾 ธุรกรรมล่าสุด</h3>
+          <div id="txList"></div>
+        </div>
       </div>
     </div>
   </div>
