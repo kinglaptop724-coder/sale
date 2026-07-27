@@ -387,6 +387,20 @@
   }
   .gameover h2{color:var(--orange-dark);font-size:1.4rem;margin-top:0;}
   .gameover p{color:var(--wood-dark);}
+  /* ===== โค้ดใหม่: แยกโซนสีฟ้าและสีส้ม ===== */
+  .zone-blue {
+    background: linear-gradient(180deg, rgba(191,234,255,0.4), rgba(255,255,255,0.4));
+    border: 4px solid var(--navy-2);
+    border-radius: 22px;
+    padding: 16px;
+  }
+  
+  .zone-orange {
+    background: linear-gradient(180deg, rgba(255,210,63,0.2), rgba(255,255,255,0.4));
+    border: 4px solid var(--orange-dark);
+    border-radius: 22px;
+    padding: 16px;
+  }
 </style>
 </head>
 <body>
@@ -425,7 +439,8 @@
 </div>
 
 <div class="grid">
-  <div>
+  <!-- โซนสีฟ้า: ส่วนของการซื้อสินค้าและตลาดกลาง -->
+  <div class="zone-blue">
     <div class="card">
       <h3>🏭 ซื้อจากซัพพลายเออร์กลาง (ราคาขยับตลอดเวลา)</h3>
       <div id="supplierList"></div>
@@ -438,7 +453,8 @@
     </div>
   </div>
 
-  <div>
+  <!-- โซนสีส้ม: ส่วนของการจัดการร้านค้าและอันดับ -->
+  <div class="zone-orange">
     <div class="card">
       <h3>🚚 รถขายของของฉัน</h3>
       <div id="shopBox"></div>
