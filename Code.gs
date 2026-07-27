@@ -159,8 +159,14 @@ function setConfig(key, value) {
 // ---------- ENTRY POINT ----------
 function doPost(e) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(15000);
+  let gotLock = false;
   try {
+    // สำคัญ: waitLock ต้องอยู่ใน try ด้วย ไม่งั้นถ้าแย่งล็อกไม่ได้ (คนเล่นพร้อมกันเยอะ)
+    // มันจะ throw ออกไปนอก try/catch ทำให้ Apps Script ตอบกลับเป็นหน้า error (ไม่ใช่ JSON)
+    // ฝั่งหน้าเว็บจะ parse JSON ไม่ได้ แล้วค้างตลอดไป (ปุ่มไม่ถูกปลดล็อก)
+    lock.waitLock(20000);
+    gotLock = true;
+
     const body = JSON.parse(e.postData.contents);
     const action = body.action;
     let result;
@@ -183,9 +189,11 @@ function doPost(e) {
     }
     return jsonResponse(result);
   } catch (err) {
-    return jsonResponse({ error: String(err) });
+    // ไม่ว่าจะ error จากขั้นตอนไหน (รวมถึงแย่งล็อกไม่ได้) ก็ยังส่ง JSON กลับเสมอ
+    // เพื่อให้หน้าเว็บโชว์ error แล้วปลดล็อกปุ่มได้ ไม่ค้าง
+    return jsonResponse({ error: 'เซิร์ฟเวอร์ไม่ว่าง กรุณาลองใหม่อีกครั้ง (' + String(err) + ')' });
   } finally {
-    lock.releaseLock();
+    if (gotLock) lock.releaseLock();
   }
 }
 
