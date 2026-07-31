@@ -429,7 +429,9 @@ function getAllShopsMap() {
 // ---------- ACTION HANDLERS ----------
 function handleJoin(body) {
   const cfg = getConfigMap();
-  if (body.code !== cfg.JOIN_CODE) return { error: 'รหัสห้องไม่ถูกต้อง' };
+  const inputCode = String(body.code || '').trim().toUpperCase();
+  const roomCode = String(cfg.JOIN_CODE || '').trim().toUpperCase();
+  if (!inputCode || inputCode !== roomCode) return { error: 'รหัสห้องไม่ถูกต้อง' };
 
   const sh = sheet(SHEETS.STUDENTS);
   const students = rowsToObjects(sh);
