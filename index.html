@@ -932,6 +932,33 @@ function render(s){
   }
   // -----------------------
 
+  document.getElementById('gameNameLabel').textContent = s.gameName || 'ตลาดนัดนักเรียน';
+  document.getElementById('cashLabel').textContent = s.student.cash;
+  document.getElementById('windowCash1').textContent = s.student.cash;
+  document.getElementById('windowCash2').textContent = s.student.cash;
+  document.getElementById('windowCash3').textContent = s.student.cash;
+
+  const timerBoxEl = document.getElementById('timerBox');
+  timerBoxEl.textContent = fmtTime(s.timeLeftSeconds);
+  timerBoxEl.classList.toggle('low', s.timeLeftSeconds !== null && s.timeLeftSeconds <= 30);
+
+  document.getElementById('gameOverBox').style.display = s.gameEnded ? 'block' : 'none';
+
+  truckStyles = s.truckStyles || [];
+  truckCost = s.truckCost || 0;
+  myShop = s.myShop || myShop;
+
+  document.getElementById('myAvatarLabel').textContent = myShop.opened ? styleById(myShop.styleId).emoji : '🏮';
+
+  renderMission(s);
+  renderShop(myShop, truckCost, truckStyles);
+  renderSupplier(s.supplierItems || []);
+  renderMarket(s.market || [], s.gameEnded);
+  renderInventory(s.inventory || [], s.gameEnded, myShop.opened);
+  renderMyListings(s.myListings || [], s.gameEnded);
+  renderLeaderboard(s.leaderboard || [], s.student.name);
+}
+
 let truckStyles = [];
 let truckCost = 0;
 let myShop = { opened: false, name: '', styleId: null, tagline: '' };
